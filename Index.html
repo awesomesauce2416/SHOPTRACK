@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShopTrack — Pump & Motor Repair</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500;600&family=Share+Tech+Mono&display=swap');
+  :root{--bg:#0f1117;--surface:#181c25;--surface2:#1f2435;--border:#2a3045;--accent:#f0a500;--accent2:#e05c00;--green:#00c97a;--red:#e03c3c;--blue:#3b82f6;--text:#e8eaf0;--text2:#8892a4;--text3:#555f72;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;font-size:14px;}
+  header{background:var(--surface);border-bottom:2px solid var(--accent);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100;}
+  .logo{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;}
+  .logo span{color:var(--text2);font-weight:400;}
+  .hstats{display:flex;gap:28px;align-items:center;}
+  .hstat{text-align:center;}
+  .hstat-val{font-family:'Share Tech Mono',monospace;font-size:20px;color:var(--accent);line-height:1;}
+  .hstat-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+  nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;gap:4px;}
+  nav button{background:none;border:none;color:var(--text2);font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:12px 20px;cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;}
+  nav button:hover{color:var(--text);}
+  nav button.active{color:var(--accent);border-bottom-color:var(--accent);}
+  main{padding:24px;max-width:1500px;margin:0 auto;}
+  .page{display:none;} .page.active{display:block;}
+  .btn{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;padding:8px 18px;border:none;cursor:pointer;border-radius:3px;transition:all .15s;}
+  .btn-primary{background:var(--accent);color:#000;} .btn-primary:hover{background:#ffc020;}
+  .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);} .btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+  .btn-green{background:var(--green);color:#000;} .btn-sm{padding:5px 12px;font-size:11px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:20px;}
+  .card-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;}
+  .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+  .g5{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;}
+  .fg{margin-bottom:14px;}
+  .fg label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text2);margin-bottom:5px;}
+  .fg input,.fg select,.fg textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:8px 12px;font-family:'Barlow',sans-serif;font-size:14px;outline:none;transition:border-color .15s;}
+  .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--accent);}
+  .fg select option{background:var(--surface2);}
+  .fg textarea{resize:vertical;min-height:70px;}
+  .fr{display:grid;gap:14px;}
+  .fr2{grid-template-columns:1fr 1fr;} .fr3{grid-template-columns:1fr 1fr 1fr;}
+  .fr4{grid-template-columns:1fr 1fr 1fr 1fr;} .fr5{grid-template-columns:1fr 1fr 1fr 1fr 1fr;}
+  .sdiv{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--accent2);border-top:1px solid var(--border);padding-top:14px;margin:18px 0 14px;display:flex;align-items:center;gap:8px;}
+  .sdiv::after{content:'';flex:1;height:1px;background:var(--border);}
+  .badge{display:inline-block;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 9px;border-radius:2px;}
+  .b-intake{background:#1e3a5f;color:#60a5fa;} .b-diagnosis{background:#2d1b69;color:#a78bfa;}
+  .b-waiting-parts{background:#451a03;color:#fb923c;} .b-in-repair{background:#1c3a2c;color:#4ade80;}
+  .b-testing{background:#1a2e3a;color:#38bdf8;} .b-ready{background:#1a3a1a;color:#86efac;}
+  .b-invoiced{background:#3a2a00;color:var(--accent);} .b-complete{background:#222;color:var(--text2);}
+  .b-Rush{background:#451a03;color:#fb923c;} .b-Emergency{background:#3a0a0a;color:var(--red);}
+  .data-table{width:100%;border-collapse:collapse;}
+  .data-table th{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text3);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surface);}
+  .data-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+  .data-table tr:hover td{background:var(--surface2);cursor:pointer;}
+  .mono{font-family:'Share Tech Mono',monospace;font-size:13px;}
+  .sbar{display:flex;gap:10px;margin-bottom:20px;align-items:center;flex-wrap:wrap;}
+  .sbar input{flex:1;min-width:200px;background:var(--surface);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:10px 16px;font-family:'Barlow',sans-serif;font-size:14px;outline:none;}
+  .sbar input:focus{border-color:var(--accent);}
+  .sbar select{background:var(--surface);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:10px 14px;font-family:'Barlow',sans-serif;font-size:14px;outline:none;cursor:pointer;}
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:200;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--accent);border-radius:4px;width:100%;max-width:940px;margin:auto;padding:28px;}
+  .mhdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px;}
+  .mtitle{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);}
+  .mclose{background:none;border:none;color:var(--text2);font-size:24px;cursor:pointer;line-height:1;}
+  .mclose:hover{color:var(--text);}
+  .mfooter{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;padding-top:18px;border-top:1px solid var(--border);flex-wrap:wrap;}
+  .pipeline{display:flex;margin:16px 0;border:1px solid var(--border);border-radius:3px;overflow:hidden;overflow-x:auto;}
+  .pstep{flex:1;text-align:center;padding:10px 4px;background:var(--bg);border-right:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text3);cursor:pointer;transition:all .15s;white-space:nowrap;min-width:78px;}
+  .pstep:last-child{border-right:none;}
+  .pstep:hover{color:var(--text);background:var(--surface2);}
+  .pstep.active{background:var(--accent);color:#000;}
+  .pstep.past{background:var(--surface2);color:var(--text2);}
+  .dtabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:20px;}
+  .dtab{background:none;border:none;color:var(--text2);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:10px 20px;cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;}
+  .dtab:hover{color:var(--text);}
+  .dtab.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .dtab-content{display:none;} .dtab-content.active{display:block;}
+  .dl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:3px;}
+  .dv{font-size:14px;color:var(--text);padding-bottom:10px;}
+  .note-item{background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:8px 12px;margin-bottom:6px;border-left:3px solid var(--text3);}
+  .note-item.type-work{border-left-color:var(--green);}
+  .note-item.type-parts{border-left-color:#fb923c;}
+  .nmeta{font-size:11px;color:var(--text3);margin-bottom:3px;display:flex;justify-content:space-between;gap:8px;}
+  .ntext{font-size:13px;}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:16px 20px;border-top:3px solid var(--border);}
+  .sc-accent{border-top-color:var(--accent);} .sc-green{border-top-color:var(--green);}
+  .sc-blue{border-top-color:var(--blue);} .sc-red{border-top-color:var(--red);} .sc-orange{border-top-color:var(--accent2);}
+  .sval{font-family:'Share Tech Mono',monospace;font-size:36px;line-height:1;}
+  .slbl{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-top:4px;}
+  .vt{display:flex;gap:4px;}
+  .vt button{background:var(--surface2);border:1px solid var(--border);color:var(--text2);padding:6px 12px;cursor:pointer;font-size:16px;border-radius:3px;transition:all .15s;}
+  .vt button.active{background:var(--accent);color:#000;border-color:var(--accent);}
+  .tag{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:2px;padding:2px 7px;font-size:11px;color:var(--text2);margin:2px;}
+  .empty{text-align:center;padding:50px 20px;color:var(--text3);}
+  .empty .ico{font-size:40px;margin-bottom:10px;}
+  .job-board{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;}
+  .jcard{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:14px;cursor:pointer;transition:all .15s;border-left:3px solid var(--border);}
+  .jcard:hover{border-color:var(--accent);background:var(--surface2);}
+  .jcard.s-intake{border-left-color:#60a5fa;} .jcard.s-diagnosis{border-left-color:#a78bfa;}
+  .jcard.s-waiting-parts{border-left-color:#fb923c;} .jcard.s-in-repair{border-left-color:#4ade80;}
+  .jcard.s-testing{border-left-color:#38bdf8;} .jcard.s-ready{border-left-color:#86efac;}
+  .jcard.s-invoiced{border-left-color:var(--accent);}
+  .po-tbl{width:100%;border-collapse:collapse;margin-top:8px;}
+  .po-tbl th{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text3);padding:6px 10px;border-bottom:1px solid var(--border);text-align:left;}
+  .po-tbl td{padding:7px 10px;border-bottom:1px solid var(--border);font-size:13px;}
+  .po-tbl tr:last-child td{border-bottom:none;}
+  .pr-open{color:#fb923c;font-weight:700;font-size:11px;} .pr-received{color:var(--green);font-weight:700;font-size:11px;} .pr-partial{color:#38bdf8;font-weight:700;font-size:11px;}
+  .prio-Emergency{color:var(--red);font-weight:700;} .prio-Rush{color:#fb923c;font-weight:700;} .prio-Normal{color:var(--text3);}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+  .pulse{animation:pulse 1.5s infinite;}
+  ::-webkit-scrollbar{width:6px;height:6px;} ::-webkit-scrollbar-track{background:var(--bg);} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+  @media(max-width:900px){.g4,.g5{grid-template-columns:1fr 1fr;}.g3,.g2{grid-template-columns:1fr;}.fr2,.fr3,.fr4,.fr5{grid-template-columns:1fr 1fr;}.hstats{display:none;}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">ShopTrack <span>// Pump & Motor Repair</span></div>
+  <div class="hstats">
+    <div class="hstat"><div class="hstat-val" id="hs-active">0</div><div class="hstat-lbl">Active</div></div>
+    <div class="hstat"><div class="hstat-val" id="hs-ready">0</div><div class="hstat-lbl">Ready</div></div>
+    <div class="hstat"><div class="hstat-val" id="hs-parts">0</div><div class="hstat-lbl">Waiting Parts</div></div>
+    <div class="hstat"><div class="hstat-val pulse" id="hs-emerg" style="color:var(--red)">0</div><div class="hstat-lbl" style="color:var(--red)">Emergency</div></div>
+    <div class="hstat"><div class="hstat-val" id="hs-today">0</div><div class="hstat-lbl">In Today</div></div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <button class="btn btn-secondary" onclick="backupData()" title="Download all your data as a backup file">💾 Backup</button>
+    <button class="btn btn-secondary" onclick="document.getElementById('restore-input').click()" title="Restore from a backup file">📂 Restore</button>
+    <input type="file" id="restore-input" accept=".json" style="display:none;" onchange="restoreData(event)">
+    <button class="btn btn-secondary" onclick="openSettingsModal()" title="Settings">⚙ Settings</button>
+    <button class="btn btn-primary" onclick="openNewJobModal()">⚡ New Intake</button>
+  </div>
+</header>
+
+<!-- BACKUP TOAST -->
+<div id="toast" style="display:none;position:fixed;bottom:24px;right:24px;background:var(--green);color:#000;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;padding:12px 24px;border-radius:4px;z-index:999;box-shadow:0 4px 20px rgba(0,0,0,.4);">✓ Backup saved!</div>
+<nav>
+  <button class="active" onclick="showPage('dash',this)">Dashboard</button>
+  <button onclick="showPage('jobs',this)">All Jobs</button>
+  <button onclick="showPage('assets',this)">Asset History</button>
+  <button onclick="showPage('customers',this)">Customers & Locations</button>
+  <button onclick="showPage('pos',this)">Purchase Orders</button>
+</nav>
+<main>
+
+<!-- DASHBOARD -->
+<div class="page active" id="page-dash">
+  <div class="g5" style="margin-bottom:24px;">
+    <div class="stat-card sc-accent"><div class="sval" id="ds-active">0</div><div class="slbl">Active Jobs</div></div>
+    <div class="stat-card sc-orange"><div class="sval" id="ds-parts">0</div><div class="slbl">Waiting Parts</div></div>
+    <div class="stat-card sc-green"><div class="sval" id="ds-ready">0</div><div class="slbl">Ready for Pickup</div></div>
+    <div class="stat-card sc-red"><div class="sval" id="ds-emerg">0</div><div class="slbl">Emergency</div></div>
+    <div class="stat-card sc-blue"><div class="sval" id="ds-total">0</div><div class="slbl">All-Time Jobs</div></div>
+  </div>
+  <div class="g2" style="margin-bottom:20px;">
+    <div class="card"><div class="card-title">🔧 Shop Floor <span id="ct-floor" style="font-size:12px;color:var(--text3);font-family:Barlow,sans-serif;font-weight:400;"></span></div><div id="dsh-floor"></div></div>
+    <div class="card"><div class="card-title">✅ Ready for Pickup <span id="ct-ready" style="font-size:12px;color:var(--text3);font-family:Barlow,sans-serif;font-weight:400;"></span></div><div id="dsh-ready"></div></div>
+  </div>
+  <div class="g2">
+    <div class="card"><div class="card-title">📦 Waiting on Parts <span id="ct-parts" style="font-size:12px;color:var(--text3);font-family:Barlow,sans-serif;font-weight:400;"></span></div><div id="dsh-parts"></div></div>
+    <div class="card"><div class="card-title">📋 Recent Intakes</div><div id="dsh-recent"></div></div>
+  </div>
+</div>
+
+<!-- ALL JOBS -->
+<div class="page" id="page-jobs">
+  <div class="sbar">
+    <input id="jsearch" placeholder="Search job#, customer, serial#, location, description..." oninput="renderJobs()">
+    <select id="jfstatus" onchange="renderJobs()"><option value="">All Statuses</option><option value="intake">Intake</option><option value="diagnosis">Diagnosis</option><option value="waiting-parts">Waiting Parts</option><option value="in-repair">In Repair</option><option value="testing">Testing</option><option value="ready">Ready</option><option value="invoiced">Invoiced</option><option value="complete">Complete</option></select>
+    <select id="jfpri" onchange="renderJobs()"><option value="">All Priorities</option><option value="Emergency">Emergency</option><option value="Rush">Rush</option><option value="Normal">Normal</option></select>
+    <div class="vt"><button class="active" id="vt-tbl" onclick="setView('table')">☰</button><button id="vt-crd" onclick="setView('cards')">⊞</button></div>
+    <button class="btn btn-secondary" onclick="exportCSV()">↓ CSV</button>
+    <button class="btn btn-primary" onclick="openNewJobModal()">+ New Intake</button>
+  </div>
+  <div id="jobs-tbl"><div class="card" style="padding:0;overflow:hidden;"><table class="data-table"><thead><tr><th>Job#</th><th>Priority</th><th>Date In</th><th>Customer</th><th>Facility/Station/Pos</th><th>Unit</th><th>Serial#</th><th>Status</th><th>Days</th><th>Open POs</th></tr></thead><tbody id="jtbody"></tbody></table></div></div>
+  <div id="jobs-crd" style="display:none;"><div class="job-board" id="jcards"></div></div>
+</div>
+
+<!-- ASSETS -->
+<div class="page" id="page-assets">
+  <div class="sbar">
+    <input id="asearch" placeholder="Search serial#, manufacturer, model, customer..." oninput="renderAssets()">
+    <button class="btn btn-secondary" onclick="exportAssetsCSV()">↓ Export CSV</button>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden;"><table class="data-table"><thead><tr><th>Serial#</th><th>Type</th><th>Manufacturer</th><th>Model</th><th>HP</th><th>Voltage</th><th>Customer</th><th>Last Location</th><th>Times In</th><th>Last Service</th><th></th></tr></thead><tbody id="atbody"></tbody></table></div>
+</div>
+
+<!-- CUSTOMERS -->
+<div class="page" id="page-customers">
+  <div class="sbar"><input id="csearch" placeholder="Search customers..." oninput="renderCustomers()"><button class="btn btn-primary" onclick="openModal('modal-cust')">+ Add Customer</button></div>
+  <div class="g2">
+    <div class="card" style="padding:0;overflow:hidden;"><table class="data-table"><thead><tr><th>Customer</th><th>Active</th><th>Total</th><th>Facilities</th><th></th></tr></thead><tbody id="ctbody"></tbody></table></div>
+    <div class="card"><div class="card-title">📍 Location Hierarchy</div><div id="loctree" style="max-height:500px;overflow-y:auto;"></div></div>
+  </div>
+</div>
+
+<!-- POS -->
+<div class="page" id="page-pos">
+  <div class="sbar">
+    <input id="posearch" placeholder="Search PO#, vendor, job#, description..." oninput="renderPOs()">
+    <select id="pofstatus" onchange="renderPOs()"><option value="">All Statuses</option><option value="open">Open</option><option value="partial">Partial</option><option value="received">Received</option></select>
+    <button class="btn btn-primary" onclick="openNewPOModal(null)">+ New PO</button>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden;"><table class="data-table"><thead><tr><th>PO#</th><th>Date</th><th>Job#</th><th>Customer</th><th>Vendor</th><th>Description</th><th>Amount</th><th>Status</th><th>ETA</th><th></th></tr></thead><tbody id="potbody"></tbody></table></div>
+</div>
+
+</main>
+
+<!-- NEW JOB MODAL -->
+<div class="modal-overlay" id="modal-job">
+  <div class="modal">
+    <div class="mhdr"><div><div class="mtitle">New Job Intake</div><div style="font-size:12px;color:var(--text2);margin-top:2px;">Fill in all nameplate data exactly as it appears on the tag</div></div><button class="mclose" onclick="closeModal('modal-job')">✕</button></div>
+    <div class="fr fr4">
+      <div class="fg"><label>Job Number</label><input id="nj-num" readonly style="opacity:.6;font-family:'Share Tech Mono',monospace;font-size:18px;color:var(--accent);"></div>
+      <div class="fg"><label>Date Received</label><input type="date" id="nj-date"></div>
+      <div class="fg"><label>Received By</label><input id="nj-by" placeholder="Staff name"></div>
+      <div class="fg"><label>Priority</label><select id="nj-pri"><option value="Normal">Normal</option><option value="Rush">🔶 Rush</option><option value="Emergency">🚨 Emergency</option></select></div>
+    </div>
+    <div class="sdiv">Customer & Location</div>
+    <div class="fr fr2">
+      <div class="fg"><label>Customer</label><select id="nj-cust" onchange="fillFacilities()"><option value="">-- Select --</option></select></div>
+      <div class="fg"><label>— or — New Customer</label><input id="nj-newcust" placeholder="New customer name..."></div>
+    </div>
+    <div class="fr fr3">
+      <div class="fg"><label>Facility / Plant</label><input id="nj-facility" list="fac-list" placeholder="e.g. Millville WWTP"><datalist id="fac-list"></datalist></div>
+      <div class="fg"><label>Station / Location</label><input id="nj-station" placeholder="e.g. Lift Station 12, B&R2"></div>
+      <div class="fg"><label>Position</label><select id="nj-pos"><option value="">N/A</option><option>Pump #1</option><option>Pump #2</option><option>Pump #3</option><option>Motor #1</option><option>Motor #2</option><option>Unit #1</option><option>Unit #2</option><option>Other</option></select></div>
+    </div>
+    <div class="sdiv">Nameplate Data — Copy Exactly From the Tag</div>
+
+    <!-- WILO SPECIFIC FIELDS - shown when Wilo selected -->
+    <div id="wilo-fields" style="display:none;background:var(--bg);border:2px solid #00a0c8;border-radius:6px;padding:16px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;letter-spacing:2px;color:#00a0c8;">WILO</div>
+        <div style="font-size:12px;color:var(--text2);">Wilo-specific nameplate fields detected</div>
+      </div>
+      <div class="fr fr3">
+        <div class="fg"><label>P-Typ (Pump Model)</label><input id="nj-ptyp" placeholder="e.g. FA 10.51E, FA 15.52E" style="border-color:#00a0c8;"></div>
+        <div class="fg"><label>M-Typ (Motor Model)</label><input id="nj-mtyp" placeholder="e.g. FK 17.1-4/8KEx, FK 202-4/27"></div>
+        <div class="fg"><label>S/N (Serial Number)</label><input id="nj-wilo-serial" placeholder="e.g. 2700650695771" style="border-color:var(--accent);"></div>
+      </div>
+      <div class="fr fr4">
+        <div class="fg"><label>U — Voltage</label><input id="nj-wilo-u" placeholder="e.g. 230/460~3" oninput="parseWiloVoltage(this.value)"></div>
+        <div class="fg"><label>I — Amps (FLA)</label><input id="nj-wilo-i" placeholder="e.g. 18.70"></div>
+        <div class="fg"><label>P — Power (kW)</label><input id="nj-wilo-p" placeholder="e.g. 6.17"></div>
+        <div class="fg"><label>N — RPM</label><input id="nj-wilo-n" placeholder="e.g. 1660"></div>
+      </div>
+      <div class="fr fr4">
+        <div class="fg"><label>F — Hz</label><input id="nj-wilo-f" placeholder="60"></div>
+        <div class="fg"><label>SF — Service Factor</label><input id="nj-wilo-sf" placeholder="e.g. 1.10"></div>
+        <div class="fg"><label>IP — Protection Rating</label><input id="nj-wilo-ip" placeholder="e.g. 68"></div>
+        <div class="fg"><label>MFY — Year Made</label><input id="nj-wilo-mfy" placeholder="e.g. 2025"></div>
+      </div>
+      <div class="fr fr3">
+        <div class="fg"><label>Ist — Starting Current</label><input id="nj-wilo-ist" placeholder="e.g. 72.00"></div>
+        <div class="fg"><label>SO — Sales Order #</label><input id="nj-wilo-so" placeholder="e.g. 201106329-10"></div>
+        <div class="fg"><label>MC — Motor Class</label><input id="nj-wilo-mc" placeholder="e.g. YY"></div>
+      </div>
+    </div>
+
+    <!-- AI NAMEPLATE SCANNER -->
+    <div id="scan-box" style="background:var(--bg);border:2px dashed var(--accent);border-radius:6px;padding:16px;margin-bottom:16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+      <div style="flex:1;min-width:200px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;color:var(--accent);margin-bottom:4px;">📷 AI NAMEPLATE SCANNER</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:10px;">Take a photo of the nameplate and AI will fill in the fields automatically.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <button type="button" class="btn btn-primary" onclick="document.getElementById('nameplate-photo').click()">📷 Upload Nameplate Photo</button>
+          <input type="file" id="nameplate-photo" accept="image/*" capture="environment" style="display:none;" onchange="scanNameplate(event)">
+          <span id="scan-status" style="font-size:12px;color:var(--text2);"></span>
+        </div>
+      </div>
+      <div id="scan-preview" style="display:none;">
+        <img id="scan-img" style="max-height:120px;max-width:200px;border-radius:4px;border:1px solid var(--border);">
+      </div>
+    </div>
+    <div class="fr fr3">
+      <div class="fg"><label>Unit Type</label><select id="nj-type"><option>Pump</option><option>Motor</option><option>Submersible Pump</option><option>Submersible Motor</option><option>Pump & Motor (Combined)</option><option>Blower</option><option>Gearbox</option><option>Other</option></select></div>
+      <div class="fg"><label>Manufacturer</label><input id="nj-mfr" placeholder="e.g. Wilo, Baldor, US Motors, Flygt" oninput="checkWiloMode(this.value)"></div>
+      <div class="fg"><label>Model / Frame</label><input id="nj-model" placeholder="e.g. TR50-2.56-4/16"></div>
+    </div>
+    <div id="wilo-section" style="display:none;background:var(--bg);border:2px solid #009bde;border-radius:6px;padding:16px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;letter-spacing:2px;color:#009bde;">WILO NAMEPLATE</div>
+        <div style="font-size:11px;color:var(--text2);">Fields specific to Wilo submersible pumps</div>
+      </div>
+      <div class="fr fr3">
+        <div class="fg"><label>P-Typ (Pump Model)</label><input id="nj-ptyp" placeholder="e.g. FA 10.51E" style="border-color:#009bde;font-family:'Share Tech Mono',monospace;"></div>
+        <div class="fg"><label>M-Typ (Motor Model)</label><input id="nj-mtyp" placeholder="e.g. FK 17.1-4/8KEx" style="border-color:#009bde;font-family:'Share Tech Mono',monospace;"></div>
+        <div class="fg"><label>S/N (Serial Number) ★</label><input id="nj-wilo-serial" placeholder="e.g. 2700650695771" style="border-color:var(--accent);font-family:'Share Tech Mono',monospace;" oninput="document.getElementById('nj-serial').value=this.value"></div>
+      </div>
+      <div class="fr fr4">
+        <div class="fg"><label>U — Voltage</label><input id="nj-wilo-u" placeholder="e.g. 230/460~3" oninput="parseWiloVoltage(this.value)"></div>
+        <div class="fg"><label>I — Amps (FLA)</label><input id="nj-wilo-i" placeholder="e.g. 18.70" oninput="document.getElementById('nj-amps').value=this.value"></div>
+        <div class="fg"><label>P — Power (kW)</label><input id="nj-wilo-p" placeholder="e.g. 6.17"></div>
+        <div class="fg"><label>N — RPM</label><input id="nj-wilo-n" placeholder="e.g. 1660" oninput="document.getElementById('nj-rpm').value=this.value"></div>
+      </div>
+      <div class="fr fr4">
+        <div class="fg"><label>F — Hz</label><input id="nj-wilo-f" placeholder="60" oninput="document.getElementById('nj-hz').value=this.value"></div>
+        <div class="fg"><label>SF — Service Factor</label><input id="nj-wilo-sf" placeholder="e.g. 1.10" oninput="document.getElementById('nj-sf').value=this.value"></div>
+        <div class="fg"><label>IP — Rating</label><input id="nj-wilo-ip" placeholder="e.g. 68" oninput="document.getElementById('nj-enc').value='IP '+this.value"></div>
+        <div class="fg"><label>MFY — Year Made</label><input id="nj-wilo-mfy" placeholder="e.g. 2026"></div>
+      </div>
+      <div class="fr fr3">
+        <div class="fg"><label>Ist — Starting Current</label><input id="nj-wilo-ist" placeholder="e.g. 72.00"></div>
+        <div class="fg"><label>Cos — Power Factor</label><input id="nj-wilo-cos" placeholder="e.g. 0.85"></div>
+        <div class="fg"><label>SO — Sales Order #</label><input id="nj-wilo-so" placeholder="e.g. 201106329-10"></div>
+      </div>
+    </div>
+<div class="fr fr5">
+      <div class="fg"><label>Serial Number ★</label><input id="nj-serial" placeholder="S/N from nameplate" style="border-color:var(--accent);">
+      <div class="fg"><label>HP / KW</label><input id="nj-hp" placeholder="e.g. 10HP"></div>
+      <div class="fg"><label>Voltage</label><input id="nj-voltage" placeholder="e.g. 460V"></div>
+      <div class="fg"><label>RPM</label><input id="nj-rpm" placeholder="e.g. 1750"></div>
+      <div class="fg"><label>Amps (FLA)</label><input id="nj-amps" placeholder="e.g. 14.2A"></div>
+    </div>
+    <div class="fr fr5">
+      <div class="fg"><label>Phase</label><select id="nj-phase"><option value="">—</option><option>1 Phase</option><option>3 Phase</option></select></div>
+      <div class="fg"><label>Hz</label><input id="nj-hz" placeholder="60"></div>
+      <div class="fg"><label>Enclosure</label><input id="nj-enc" placeholder="TEFC, ODP..."></div>
+      <div class="fg"><label>Insulation Class</label><input id="nj-ins" placeholder="F, H..."></div>
+      <div class="fg"><label>Service Factor</label><input id="nj-sf" placeholder="1.15"></div>
+    </div>
+    <div class="sdiv">Complaint & Observations</div>
+    <div class="fr fr2">
+      <div class="fg"><label>Customer's Complaint</label><textarea id="nj-complaint" placeholder="What is the customer reporting?"></textarea></div>
+      <div class="fg"><label>Initial Observations (Intake)</label><textarea id="nj-obs" placeholder="What do you see when it comes in?"></textarea></div>
+    </div>
+    <div class="fr fr3">
+      <div class="fg"><label>Customer PO #</label><input id="nj-cpo" placeholder="If provided"></div>
+      <div class="fg"><label>Quote Amount ($)</label><input type="number" id="nj-quote" placeholder="0.00" step="0.01"></div>
+      <div class="fg"><label>Promised Date</label><input type="date" id="nj-promised"></div>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-secondary" onclick="closeModal('modal-job')">Cancel</button>
+      <button class="btn btn-secondary" onclick="saveJob(true)">Save & Print Tag</button>
+      <button class="btn btn-primary" onclick="saveJob(false)">Save Job</button>
+    </div>
+  </div>
+</div>
+
+<!-- JOB DETAIL MODAL -->
+<div class="modal-overlay" id="modal-detail">
+  <div class="modal" style="max-width:1000px;">
+    <div class="mhdr">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="mtitle" id="det-title">Job #</div>
+          <span id="det-pribadge"></span><span id="det-stbadge"></span>
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px;" id="det-sub"></div>
+      </div>
+      <button class="mclose" onclick="closeModal('modal-detail')">✕</button>
+    </div>
+    <div class="pipeline" id="det-pipe">
+      <div class="pstep" data-s="intake" onclick="setStatus('intake',this)">Intake</div>
+      <div class="pstep" data-s="diagnosis" onclick="setStatus('diagnosis',this)">Diagnosis</div>
+      <div class="pstep" data-s="waiting-parts" onclick="setStatus('waiting-parts',this)">Waiting Parts</div>
+      <div class="pstep" data-s="in-repair" onclick="setStatus('in-repair',this)">In Repair</div>
+      <div class="pstep" data-s="testing" onclick="setStatus('testing',this)">Testing</div>
+      <div class="pstep" data-s="ready" onclick="setStatus('ready',this)">Ready</div>
+      <div class="pstep" data-s="invoiced" onclick="setStatus('invoiced',this)">Invoiced</div>
+      <div class="pstep" data-s="complete" onclick="setStatus('complete',this)">Complete</div>
+    </div>
+    <div class="dtabs">
+      <button class="dtab active" onclick="showTab('overview',this)">Overview</button>
+      <button class="dtab" onclick="showTab('nameplate',this)">Nameplate</button>
+      <button class="dtab" onclick="showTab('worklog',this)">Work Log</button>
+      <button class="dtab" onclick="showTab('dpos',this)">POs <span id="det-pocnt"></span></button>
+      <button class="dtab" onclick="showTab('history',this)">Unit History <span id="det-histcnt"></span></button>
+    </div>
+    <!-- OVERVIEW -->
+    <div class="dtab-content active" id="dtab-overview">
+      <div class="g2">
+        <div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:10px;">Customer & Location</div>
+          <div class="fr fr2">
+            <div><div class="dl">Customer</div><div class="dv" id="d-cust"></div></div>
+            <div><div class="dl">Facility/Plant</div><div class="dv" id="d-fac"></div></div>
+            <div><div class="dl">Station</div><div class="dv" id="d-sta"></div></div>
+            <div><div class="dl">Position</div><div class="dv" id="d-pos"></div></div>
+          </div>
+        </div>
+        <div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:10px;">Job Info</div>
+          <div class="fr fr2">
+            <div><div class="dl">Date In</div><div class="dv" id="d-datein"></div></div>
+            <div><div class="dl">Promised</div><div class="dv" id="d-promised"></div></div>
+            <div><div class="dl">Customer PO</div><div class="dv mono" id="d-cpo"></div></div>
+            <div><div class="dl">Quote</div><div class="dv" id="d-quote"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="g2" style="margin-top:14px;">
+        <div><div class="dl">Customer Complaint</div><div class="dv" id="d-complaint" style="background:var(--bg);padding:10px;border-radius:3px;min-height:60px;"></div></div>
+        <div><div class="dl">Initial Observations</div><div class="dv" id="d-obs" style="background:var(--bg);padding:10px;border-radius:3px;min-height:60px;"></div></div>
+      </div>
+    </div>
+    <!-- NAMEPLATE -->
+    <div class="dtab-content" id="dtab-nameplate">
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:16px;">
+        <div class="g4">
+          <div><div class="dl">Type</div><div class="dv" id="d-type"></div></div>
+          <div><div class="dl">Manufacturer</div><div class="dv" id="d-mfr"></div></div>
+          <div><div class="dl">Model/Frame</div><div class="dv mono" id="d-model"></div></div>
+          <div><div class="dl">Serial Number</div><div class="dv mono" id="d-serial" style="color:var(--accent);font-size:16px;"></div></div>
+          <div id="d-ptyp-wrap" style="display:none;"><div class="dl">P-Typ (Pump)</div><div class="dv mono" id="d-ptyp" style="color:#2a9d8f;"></div></div>
+          <div id="d-mtyp-wrap" style="display:none;"><div class="dl">M-Typ (Motor)</div><div class="dv mono" id="d-mtyp" style="color:#2a9d8f;"></div></div>
+          <div id="d-so-wrap" style="display:none;"><div class="dl">SO Number</div><div class="dv mono" id="d-so"></div></div>
+          <div id="d-mfy-wrap" style="display:none;"><div class="dl">Year Mfg (MFY)</div><div class="dv" id="d-mfy"></div></div>
+          <div><div class="dl">HP/KW</div><div class="dv" id="d-hp"></div></div>
+          <div><div class="dl">Voltage</div><div class="dv" id="d-voltage"></div></div>
+          <div><div class="dl">Phase</div><div class="dv" id="d-phase"></div></div>
+          <div><div class="dl">RPM</div><div class="dv" id="d-rpm"></div></div>
+          <div><div class="dl">Amps (FLA)</div><div class="dv" id="d-amps"></div></div>
+          <div><div class="dl">Hz</div><div class="dv" id="d-hz"></div></div>
+          <div><div class="dl">Enclosure</div><div class="dv" id="d-enc"></div></div>
+          <div><div class="dl">Insulation/SF</div><div class="dv" id="d-ins"></div></div>
+        </div>
+      </div>
+      <!-- WILO EXTRA DATA -->
+      <div id="det-wilo-section" style="display:none;margin-top:14px;background:var(--bg);border:1px solid #00a0c8;border-radius:4px;padding:14px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;letter-spacing:2px;color:#00a0c8;margin-bottom:10px;">WILO NAMEPLATE DATA</div>
+        <div class="g4">
+          <div><div class="dl">P-Typ (Pump)</div><div class="dv mono" id="d-ptyp"></div></div>
+          <div><div class="dl">M-Typ (Motor)</div><div class="dv mono" id="d-mtyp"></div></div>
+          <div><div class="dl">U (Voltage)</div><div class="dv" id="d-wilo-u"></div></div>
+          <div><div class="dl">I (FLA Amps)</div><div class="dv" id="d-wilo-i"></div></div>
+          <div><div class="dl">P (kW)</div><div class="dv" id="d-wilo-p"></div></div>
+          <div><div class="dl">N (RPM)</div><div class="dv" id="d-wilo-n"></div></div>
+          <div><div class="dl">SF</div><div class="dv" id="d-wilo-sf"></div></div>
+          <div><div class="dl">IP Rating</div><div class="dv" id="d-wilo-ip"></div></div>
+          <div><div class="dl">Ist (Start A)</div><div class="dv" id="d-wilo-ist"></div></div>
+          <div><div class="dl">MFY (Year)</div><div class="dv" id="d-wilo-mfy"></div></div>
+          <div><div class="dl">SO Number</div><div class="dv mono" id="d-wilo-so"></div></div>
+          <div><div class="dl">MC</div><div class="dv" id="d-wilo-mc"></div></div>
+        </div>
+      </div>
+    </div>
+    <!-- WORK LOG -->
+    <div class="dtab-content" id="dtab-worklog">
+      <div id="det-notes" style="max-height:280px;overflow-y:auto;margin-bottom:14px;"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <input id="nn-text" placeholder="Add note, work performed, parts update..." style="flex:1;min-width:180px;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:8px 12px;font-family:Barlow,sans-serif;font-size:14px;outline:none;">
+        <select id="nn-type" style="background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:8px;font-size:13px;outline:none;">
+          <option value="note">📋 Note</option><option value="work">🔧 Work Done</option><option value="parts">📦 Parts</option>
+        </select>
+        <select id="nn-who" style="background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:8px;font-size:13px;outline:none;">
+          <option>Front Desk</option><option>Shop Tech</option><option>Management</option>
+        </select>
+        <button class="btn btn-secondary" onclick="addNote()">Add</button>
+      </div>
+    </div>
+    <!-- JOB POs -->
+    <div class="dtab-content" id="dtab-dpos">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:10px;"><button class="btn btn-primary btn-sm" onclick="openNewPOModal(currentJobId)">+ Add PO to This Job</button></div>
+      <table class="po-tbl"><thead><tr><th>PO#</th><th>Vendor</th><th>Description</th><th>Amount</th><th>Ordered</th><th>ETA</th><th>Status</th><th></th></tr></thead><tbody id="det-potbl"></tbody></table>
+      <div id="det-po-empty" style="color:var(--text3);font-size:13px;padding:16px 0;display:none;">No POs on this job yet.</div>
+    </div>
+    <!-- HISTORY -->
+    <div class="dtab-content" id="dtab-history">
+      <div id="det-hist"></div>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-secondary" onclick="closeModal('modal-detail')">Close</button>
+      <button class="btn btn-secondary" onclick="doPrint()">🖨 Print Job Tag</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW PO MODAL -->
+<div class="modal-overlay" id="modal-po">
+  <div class="modal" style="max-width:600px;">
+    <div class="mhdr"><div class="mtitle">Purchase Order</div><button class="mclose" onclick="closeModal('modal-po')">✕</button></div>
+    <div class="fr fr3">
+      <div class="fg"><label>PO Number</label><input id="po-num" readonly style="opacity:.6;font-family:'Share Tech Mono',monospace;color:var(--accent);"></div>
+      <div class="fg"><label>Date Ordered</label><input type="date" id="po-date"></div>
+      <div class="fg"><label>Linked Job #</label><input id="po-jobnum" placeholder="Job number"></div>
+    </div>
+    <div class="fr fr2">
+      <div class="fg"><label>Vendor / Supplier</label><input id="po-vendor" placeholder="e.g. Wilo USA, Grainger, Motion Industries"></div>
+      <div class="fg"><label>Vendor's Order/Confirm #</label><input id="po-vref" placeholder="Vendor confirmation #"></div>
+    </div>
+    <div class="fg"><label>Parts / Description</label><textarea id="po-desc" placeholder="What was ordered? Part numbers, quantities..."></textarea></div>
+    <div class="fr fr3">
+      <div class="fg"><label>Amount ($)</label><input type="number" id="po-amt" placeholder="0.00" step="0.01"></div>
+      <div class="fg"><label>Expected Delivery</label><input type="date" id="po-eta"></div>
+      <div class="fg"><label>Status</label><select id="po-status"><option value="open">Open — Ordered</option><option value="partial">Partial — Some In</option><option value="received">Received — All In</option></select></div>
+    </div>
+    <div class="fg"><label>Notes</label><input id="po-notes" placeholder="Any special notes..."></div>
+    <div class="mfooter">
+      <button class="btn btn-secondary" onclick="closeModal('modal-po')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePO()">Save PO</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW CUSTOMER MODAL -->
+<div class="modal-overlay" id="modal-cust">
+  <div class="modal" style="max-width:500px;">
+    <div class="mhdr"><div class="mtitle">Add Customer</div><button class="mclose" onclick="closeModal('modal-cust')">✕</button></div>
+    <div class="fg"><label>Customer / Organization Name</label><input id="nc-name" placeholder="e.g. City of Panama City Beach"></div>
+    <div class="fr fr2">
+      <div class="fg"><label>Primary Contact</label><input id="nc-contact"></div>
+      <div class="fg"><label>Phone</label><input id="nc-phone"></div>
+    </div>
+    <div class="fg"><label>Email</label><input type="email" id="nc-email"></div>
+    <div class="fg"><label>Notes / Pricing Tier</label><textarea id="nc-notes" placeholder="Special pricing, billing, contacts..."></textarea></div>
+    <div class="mfooter">
+      <button class="btn btn-secondary" onclick="closeModal('modal-cust')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCust()">Save Customer</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="modal-settings">
+  <div class="modal" style="max-width:560px;">
+    <div class="mhdr"><div class="mtitle">Settings</div><button class="mclose" onclick="closeModal('modal-settings')">X</button></div>
+    <div style="background:var(--bg);border:1px solid var(--accent);border-radius:4px;padding:16px;margin-bottom:20px;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;color:var(--accent);margin-bottom:8px;">AI NAMEPLATE SCANNER</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6;">Enter your Anthropic API key to enable automatic nameplate reading from photos. Your key is stored only on this computer.</div>
+      <div class="fg">
+        <label>Anthropic API Key</label>
+        <div style="display:flex;gap:8px;">
+          <input type="password" id="settings-apikey" placeholder="sk-ant-..." style="flex:1;font-family:'Share Tech Mono',monospace;">
+          <button class="btn btn-secondary btn-sm" onclick="toggleKeyVis()">Show</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
+        <button class="btn btn-primary btn-sm" onclick="saveAPIKey()">Save Key</button>
+        <button class="btn btn-secondary btn-sm" onclick="testAPIKey()">Test Connection</button>
+        <span id="key-status" style="font-size:12px;"></span>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:var(--text3);">Get a key at console.anthropic.com. Cost: approx $0.01 per nameplate scan.</div>
+    </div>
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:16px;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;color:var(--text2);margin-bottom:10px;">Shop Info</div>
+      <div class="fr fr2">
+        <div class="fg"><label>Shop Name</label><input id="settings-shopname" placeholder="Your company name"></div>
+        <div class="fg"><label>Starting Job Number</label><input type="number" id="settings-nextjob"></div>
+      </div>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-secondary" onclick="closeModal('modal-settings')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let db={jobs:[],customers:[],pos:[],nextJob:24200,nextPO:1001};
+let currentJobId=null,currentView='table';
+
+function loadDB(){try{const s=localStorage.getItem('shoptrack_v2');if(s)db=JSON.parse(s);}catch(e){}}
+function saveDB(){try{localStorage.setItem('shoptrack_v2',JSON.stringify(db));}catch(e){}}
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function v(id){const e=document.getElementById(id);return e?e.value:'';}
+function set(id,val){const e=document.getElementById(id);if(e)e.textContent=val;}
+function today(){return new Date().toISOString().split('T')[0];}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
+function days(d){return Math.floor((Date.now()-new Date(d))/86400000);}
+function money(v){return v?'$'+parseFloat(v).toLocaleString('en-US',{minimumFractionDigits:2}):'—';}
+
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(id==='dash')renderDash();
+  if(id==='jobs')renderJobs();
+  if(id==='assets')renderAssets();
+  if(id==='customers')renderCustomers();
+  if(id==='pos')renderPOs();
+}
+
+function showTab(id,btn){
+  document.querySelectorAll('.dtab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.dtab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('dtab-'+id).classList.add('active');
+  if(btn)btn.classList.add('active');
+}
+
+// ---- STATS ----
+function updateStats(){
+  const active=db.jobs.filter(j=>j.status!=='complete').length;
+  const ready=db.jobs.filter(j=>j.status==='ready').length;
+  const parts=db.jobs.filter(j=>j.status==='waiting-parts').length;
+  const emerg=db.jobs.filter(j=>j.priority==='Emergency'&&j.status!=='complete').length;
+  const t=today();
+  const tin=db.jobs.filter(j=>j.dateIn===t).length;
+  ['hs-active','ds-active'].forEach(i=>set(i,active));
+  ['hs-ready','ds-ready'].forEach(i=>set(i,ready));
+  ['hs-parts','ds-parts'].forEach(i=>set(i,parts));
+  ['hs-emerg','ds-emerg'].forEach(i=>set(i,emerg));
+  set('hs-today',tin);
+  set('ds-total',db.jobs.length);
+}
+
+// ---- NEW JOB ----
+function openNewJobModal(){
+  set('nj-num',db.nextJob);
+  document.getElementById('nj-num').value=db.nextJob;
+  document.getElementById('nj-date').value=today();
+  populateCustDrop('nj-cust');
+  ['nj-by','nj-newcust','nj-facility','nj-station','nj-mfr','nj-model','nj-serial','nj-hp','nj-voltage','nj-rpm','nj-amps','nj-hz','nj-enc','nj-ins','nj-sf','nj-complaint','nj-obs','nj-cpo','nj-quote','nj-promised'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('nj-pri').value='Normal';
+  clearWiloFields();
+  document.getElementById('nj-pos').value='';
+  document.getElementById('nj-type').value='Pump';
+  document.getElementById('nj-phase').value='';
+  openModal('modal-job');
+}
+
+function populateCustDrop(selId){
+  const sel=document.getElementById(selId);if(!sel)return;
+  sel.innerHTML='<option value="">-- Select Customer --</option>';
+  db.customers.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.name;sel.appendChild(o);});
+}
+
+function fillFacilities(){
+  const cid=v('nj-cust');
+  const c=db.customers.find(x=>x.id===cid);
+  const dl=document.getElementById('fac-list');dl.innerHTML='';
+  if(c){
+    [...new Set(db.jobs.filter(j=>j.customer===c.name).map(j=>j.facility).filter(Boolean))].forEach(f=>{const o=document.createElement('option');o.value=f;dl.appendChild(o);});
+  }
+}
+
+function saveJob(print){
+  let custName='';
+  const newC=v('nj-newcust').trim();
+  const selC=v('nj-cust');
+  if(newC){const nc={id:uid(),name:newC,contact:'',phone:'',email:'',notes:''};db.customers.push(nc);custName=newC;}
+  else if(selC){const f=db.customers.find(c=>c.id===selC);if(f)custName=f.name;}
+  if(!custName){alert('Please select or enter a customer.');return;}
+  // Handle Wilo vs standard fields
+  const isWilo = v('nj-mfr').toLowerCase().includes('wilo');
+  const serialNum = isWilo ? v('nj-wilo-serial') : v('nj-serial');
+  const modelVal = isWilo ? (v('nj-ptyp') + (v('nj-mtyp') ? ' / ' + v('nj-mtyp') : '')) : v('nj-model');
+  const job={id:uid(),number:db.nextJob++,dateIn:v('nj-date'),receivedBy:v('nj-by'),customer:custName,
+    facility:v('nj-facility'),station:v('nj-station'),position:v('nj-pos'),
+    unitType:v('nj-type'),manufacturer:v('nj-mfr'),
+    model:modelVal,
+    pTyp:v('nj-ptyp'),mTyp:v('nj-mtyp'),
+    serial:serialNum,
+    soNumber:v('nj-so'),mfy:v('nj-mfy'),
+    hp:v('nj-hp'),voltage:v('nj-voltage'),rpm:v('nj-rpm'),phase:v('nj-phase'),
+    amps:v('nj-amps'),hz:v('nj-hz'),enclosure:v('nj-enc'),insulation:v('nj-ins'),sf:v('nj-sf'),
+    complaint:v('nj-complaint'),observations:v('nj-obs'),priority:v('nj-pri'),quote:v('nj-quote'),
+    custPO:v('nj-cpo'),promised:v('nj-promised'),status:'intake',notes:[],dateOut:null};
+  db.jobs.push(job);saveDB();closeModal('modal-job');updateStats();renderDash();
+  if(print)doPrintById(job.id);
+}
+
+// ---- JOB DETAIL ----
+function openJobDetail(jid){
+  const job=db.jobs.find(j=>j.id===jid);if(!job)return;
+  currentJobId=jid;
+  document.getElementById('det-title').textContent='Job #'+job.number;
+  document.getElementById('det-sub').textContent=[job.customer,job.facility,job.station,job.position].filter(Boolean).join(' — ');
+  document.getElementById('det-pribadge').innerHTML=job.priority!=='Normal'?`<span class="badge b-${job.priority}">${job.priority}</span>`:'';
+  document.getElementById('det-stbadge').innerHTML=`<span class="badge b-${job.status}">${job.status}</span>`;
+  const sts=['intake','diagnosis','waiting-parts','in-repair','testing','ready','invoiced','complete'];
+  const idx=sts.indexOf(job.status);
+  document.querySelectorAll('.pstep').forEach((s,i)=>{s.classList.remove('active','past');if(i===idx)s.classList.add('active');else if(i<idx)s.classList.add('past');});
+  set('d-cust',job.customer);set('d-fac',job.facility||'—');set('d-sta',job.station||'—');set('d-pos',job.position||'—');
+  set('d-datein',job.dateIn||'—');set('d-promised',job.promised||'—');set('d-cpo',job.custPO||'—');set('d-quote',money(job.quote));
+  set('d-complaint',job.complaint||'—');set('d-obs',job.observations||'—');
+  set('d-type',job.unitType||'—');set('d-mfr',job.manufacturer||'—');set('d-model',job.model||'—');
+  set('d-serial',job.serial||'⚠ NOT RECORDED');
+  set('d-hp',job.hp||'—');set('d-voltage',job.voltage||'—');set('d-phase',job.phase||'—');
+  set('d-rpm',job.rpm||'—');set('d-amps',job.amps||'—');set('d-hz',job.hz||'—');set('d-enc',job.enclosure||'—');
+  set('d-ins',[job.insulation,job.sf?'SF '+job.sf:''].filter(Boolean).join(' / ')||'—');
+
+  // Wilo section in detail view
+  const wiloSec = document.getElementById('det-wilo-section');
+  if(job.pTyp || (job.wiloData && job.wiloData.pTyp)){
+    if(wiloSec) wiloSec.style.display='block';
+    const wd = job.wiloData || {};
+    set('d-ptyp', job.pTyp || wd.pTyp || '—');
+    set('d-mtyp', job.mTyp || wd.mTyp || '—');
+    set('d-wilo-u', wd.voltage || '—');
+    set('d-wilo-i', wd.amps || '—');
+    set('d-wilo-p', wd.kw || '—');
+    set('d-wilo-n', wd.rpm || job.rpm || '—');
+    set('d-wilo-sf', wd.sf || '—');
+    set('d-wilo-ip', wd.ip || '—');
+    set('d-wilo-ist', wd.ist || '—');
+    set('d-wilo-mfy', wd.mfy || '—');
+    set('d-wilo-so', wd.so || '—');
+    set('d-wilo-mc', wd.mc || '—');
+  } else {
+    if(wiloSec) wiloSec.style.display='none';
+  }
+  renderDetNotes(job);renderDetPOs(job);renderDetHistory(job);
+  showTab('overview',document.querySelector('.dtab'));
+  openModal('modal-detail');
+}
+
+function renderDetNotes(job){
+  const el=document.getElementById('det-notes');
+  if(!job.notes||job.notes.length===0){el.innerHTML='<div style="color:var(--text3);padding:12px 0;">No log entries yet.</div>';return;}
+  el.innerHTML=[...job.notes].reverse().map(n=>`<div class="note-item type-${n.type||'note'}"><div class="nmeta"><span style="color:var(--text2);">${n.who}</span><span style="text-transform:capitalize;">${n.type||'note'}</span><span>${n.date}</span></div><div class="ntext">${n.text}</div></div>`).join('');
+}
+
+function renderDetPOs(job){
+  const jpos=db.pos.filter(p=>String(p.jobNum)===String(job.number));
+  const tbl=document.getElementById('det-potbl');
+  const emp=document.getElementById('det-po-empty');
+  const open=jpos.filter(p=>p.status!=='received').length;
+  document.getElementById('det-pocnt').innerHTML=open>0?`<span style="background:var(--accent2);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;margin-left:4px;">${open}</span>`:'';
+  if(jpos.length===0){tbl.innerHTML='';emp.style.display='block';return;}
+  emp.style.display='none';
+  tbl.innerHTML=jpos.map(p=>`<tr><td class="mono" style="color:var(--accent);">PO-${p.poNum}</td><td>${p.vendor||'—'}</td><td style="font-size:12px;">${p.desc||'—'}</td><td>${money(p.amt)}</td><td style="font-size:12px;">${p.date||'—'}</td><td style="font-size:12px;">${p.eta||'—'}</td><td><span class="pr-${p.status}">${p.status.toUpperCase()}</span></td><td>${p.status!=='received'?`<button class="btn btn-green btn-sm" onclick="markReceived('${p.id}')">✓ In</button>`:''}</td></tr>`).join('');
+}
+
+function renderDetHistory(job){
+  const el=document.getElementById('det-hist');
+  const hcnt=document.getElementById('det-histcnt');
+  if(!job.serial){el.innerHTML='<div style="color:var(--text3);padding:16px;">No serial number — cannot look up history.</div>';hcnt.innerHTML='';return;}
+  const rel=db.jobs.filter(j=>j.serial===job.serial&&j.id!==job.id).sort((a,b)=>b.number-a.number);
+  hcnt.innerHTML=rel.length>0?`<span style="background:var(--blue);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;margin-left:4px;">${rel.length}</span>`:'';
+  if(rel.length===0){el.innerHTML=`<div style="padding:16px;"><div style="color:var(--text3);">First time this unit has been in the shop.</div><div style="font-family:'Share Tech Mono',monospace;color:var(--accent);margin-top:6px;">S/N: ${job.serial}</div></div>`;return;}
+  el.innerHTML=`<div style="font-size:12px;color:var(--text2);margin-bottom:10px;">S/N <span class="mono" style="color:var(--accent);">${job.serial}</span> has been in the shop <strong style="color:var(--text);">${rel.length}</strong> other time(s)</div>`+rel.map(r=>`<div style="background:var(--bg);border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:3px;padding:12px;margin-bottom:8px;cursor:pointer;" onclick="openJobDetail('${r.id}')"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span class="mono" style="color:var(--accent);">Job #${r.number}</span><span class="badge b-${r.status}">${r.status}</span></div><div style="font-size:12px;color:var(--text2);">${r.dateIn} — ${r.customer}${r.facility?' / '+r.facility:''}</div><div style="font-size:13px;margin-top:4px;">${r.complaint||'No complaint recorded'}</div></div>`).join('');
+}
+
+function addNote(){
+  const txt=v('nn-text').trim();if(!txt||!currentJobId)return;
+  const job=db.jobs.find(j=>j.id===currentJobId);if(!job)return;
+  if(!job.notes)job.notes=[];
+  job.notes.push({text:txt,type:v('nn-type'),who:v('nn-who'),date:new Date().toLocaleString()});
+  document.getElementById('nn-text').value='';
+  saveDB();renderDetNotes(job);
+}
+
+function setStatus(status,el){
+  if(!currentJobId)return;
+  const job=db.jobs.find(j=>j.id===currentJobId);if(!job)return;
+  job.status=status;if(status==='complete')job.dateOut=today();
+  saveDB();
+  const sts=['intake','diagnosis','waiting-parts','in-repair','testing','ready','invoiced','complete'];
+  const idx=sts.indexOf(status);
+  document.querySelectorAll('.pstep').forEach((s,i)=>{s.classList.remove('active','past');if(i===idx)s.classList.add('active');else if(i<idx)s.classList.add('past');});
+  document.getElementById('det-stbadge').innerHTML=`<span class="badge b-${status}">${status}</span>`;
+  updateStats();
+}
+
+// ---- POs ----
+function openNewPOModal(jobId){
+  document.getElementById('po-num').value='PO-'+db.nextPO;
+  document.getElementById('po-date').value=today();
+  if(jobId){const job=db.jobs.find(j=>j.id===jobId);document.getElementById('po-jobnum').value=job?job.number:'';}
+  else document.getElementById('po-jobnum').value='';
+  ['po-vendor','po-vref','po-desc','po-amt','po-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('po-eta').value='';
+  document.getElementById('po-status').value='open';
+  openModal('modal-po');
+}
+
+function savePO(){
+  const po={id:uid(),poNum:db.nextPO++,date:v('po-date'),jobNum:v('po-jobnum'),vendor:v('po-vendor'),vref:v('po-vref'),desc:v('po-desc'),amt:v('po-amt'),eta:v('po-eta'),status:v('po-status'),notes:v('po-notes')};
+  db.pos.push(po);saveDB();closeModal('modal-po');
+  const job=db.jobs.find(j=>j.id===currentJobId);if(job)renderDetPOs(job);
+  renderPOs();
+}
+
+function markReceived(poId){
+  const po=db.pos.find(p=>p.id===poId);if(!po)return;
+  po.status='received';saveDB();
+  const job=db.jobs.find(j=>j.id===currentJobId);if(job)renderDetPOs(job);
+  renderPOs();
+}
+
+function renderPOs(){
+  const srch=(v('posearch')||'').toLowerCase();
+  const sf=v('pofstatus')||'';
+  let pos=db.pos.filter(p=>{
+    const ms=!sf||p.status===sf;
+    const mq=!srch||[p.poNum?.toString(),p.vendor,p.desc,p.jobNum?.toString()].join(' ').toLowerCase().includes(srch);
+    return ms&&mq;
+  }).sort((a,b)=>b.poNum-a.poNum);
+  const tbody=document.getElementById('potbody');
+  if(!pos.length){tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text3);">No purchase orders found</td></tr>';return;}
+  tbody.innerHTML=pos.map(p=>{
+    const job=db.jobs.find(j=>String(j.number)===String(p.jobNum));
+    return `<tr>
+      <td class="mono" style="color:var(--accent);">PO-${p.poNum}</td>
+      <td style="font-size:12px;">${p.date||'—'}</td>
+      <td class="mono">${p.jobNum?`<span style="color:var(--accent);">#${p.jobNum}</span>`:'—'}</td>
+      <td style="font-size:12px;">${job?job.customer:'—'}</td>
+      <td><strong>${p.vendor||'—'}</strong></td>
+      <td style="font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.desc||'—'}</td>
+      <td>${money(p.amt)}</td>
+      <td><span class="pr-${p.status}">${p.status.toUpperCase()}</span></td>
+      <td style="font-size:12px;">${p.eta||'—'}</td>
+      <td>${p.status!=='received'?`<button class="btn btn-green btn-sm" onclick="markReceived('${p.id}')">✓ In</button>`:'<span style="color:var(--text3);font-size:11px;">✓ Done</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ---- DASHBOARD ----
+function renderDash(){
+  updateStats();
+  const floor=db.jobs.filter(j=>['intake','diagnosis','in-repair','testing'].includes(j.status)).sort((a,b)=>({Emergency:0,Rush:1,Normal:2}[a.priority]||2)-({Emergency:0,Rush:1,Normal:2}[b.priority]||2));
+  const ready=db.jobs.filter(j=>j.status==='ready');
+  const parts=db.jobs.filter(j=>j.status==='waiting-parts');
+  set('ct-floor',floor.length?`(${floor.length})`:'');
+  set('ct-ready',ready.length?`(${ready.length})`:'');
+  set('ct-parts',parts.length?`(${parts.length})`:'');
+  renderMiniList('dsh-floor',floor);
+  renderMiniList('dsh-ready',ready);
+  renderMiniList('dsh-parts',parts);
+  const recent=[...db.jobs].sort((a,b)=>b.number-a.number).slice(0,6);
+  const rel=document.getElementById('dsh-recent');
+  if(!recent.length){rel.innerHTML='<div class="empty"><div class="ico">📋</div><p>No jobs yet — create your first intake!</p></div>';return;}
+  rel.innerHTML=`<table class="data-table"><thead><tr><th>Job#</th><th>Customer</th><th>Unit</th><th>S/N</th><th>Status</th><th>In</th></tr></thead><tbody>${recent.map(j=>`<tr onclick="openJobDetail('${j.id}')"><td class="mono" style="color:var(--accent);">${j.number}</td><td>${j.customer}</td><td style="font-size:12px;">${[j.manufacturer,j.unitType,j.hp].filter(Boolean).join(' ')}</td><td class="mono" style="font-size:12px;">${j.serial||'—'}</td><td><span class="badge b-${j.status}">${j.status}</span></td><td style="font-size:12px;">${j.dateIn}</td></tr>`).join('')}</tbody></table>`;
+}
+
+function renderMiniList(id,jobs){
+  const el=document.getElementById(id);
+  if(!jobs.length){el.innerHTML='<div style="color:var(--text3);font-size:13px;padding:8px 0;">None</div>';return;}
+  el.innerHTML=jobs.slice(0,8).map(j=>{
+    const d=days(j.dateIn);
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--bg);border-radius:3px;margin-bottom:5px;cursor:pointer;border-left:3px solid ${j.priority==='Emergency'?'var(--red)':j.priority==='Rush'?'#fb923c':'var(--border)'};" onclick="openJobDetail('${j.id}')">
+      <div style="min-width:0;overflow:hidden;">
+        <span class="mono" style="color:var(--accent);margin-right:8px;">#${j.number}</span><strong style="font-size:13px;">${j.customer}</strong>${j.station?`<span style="font-size:11px;color:var(--text3);margin-left:6px;">${j.station}</span>`:''}
+        <div style="font-size:11px;color:var(--text3);margin-top:1px;">${[j.manufacturer,j.hp,j.serial?'S/N:'+j.serial:''].filter(Boolean).join(' · ')}</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
+        ${j.priority!=='Normal'?`<span class="badge b-${j.priority}">${j.priority}</span>`:''}
+        <span class="badge b-${j.status}">${j.status}</span>
+        <span style="font-size:11px;color:${d>14?'var(--red)':d>7?'var(--accent2)':'var(--text3)'};">${d}d</span>
+      </div>
+    </div>`;
+  }).join('')+(jobs.length>8?`<div style="font-size:12px;color:var(--text3);text-align:center;padding:6px;">+${jobs.length-8} more</div>`:'');
+}
+
+// ---- JOBS TABLE ----
+function setView(vw){
+  currentView=vw;
+  document.getElementById('jobs-tbl').style.display=vw==='table'?'block':'none';
+  document.getElementById('jobs-crd').style.display=vw==='cards'?'block':'none';
+  document.getElementById('vt-tbl').classList.toggle('active',vw==='table');
+  document.getElementById('vt-crd').classList.toggle('active',vw==='cards');
+  renderJobs();
+}
+
+function renderJobs(){
+  const srch=(v('jsearch')||'').toLowerCase();
+  const sf=v('jfstatus')||'';
+  const pf=v('jfpri')||'';
+  const PRI={Emergency:0,Rush:1,Normal:2};
+  let jobs=db.jobs.filter(j=>{
+    return (!sf||j.status===sf)&&(!pf||j.priority===pf)&&(!srch||[j.number?.toString(),j.customer,j.serial,j.manufacturer,j.model,j.station,j.facility,j.complaint,j.position].join(' ').toLowerCase().includes(srch));
+  }).sort((a,b)=>{
+    const pd=(PRI[a.priority]||2)-(PRI[b.priority]||2);
+    return pd!==0?pd:b.number-a.number;
+  });
+
+  if(currentView==='table'){
+    const tb=document.getElementById('jtbody');
+    if(!jobs.length){tb.innerHTML='<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text3);">No jobs found</td></tr>';return;}
+    tb.innerHTML=jobs.map(j=>{
+      const d=days(j.dateIn);
+      const opo=db.pos.filter(p=>String(p.jobNum)===String(j.number)&&p.status!=='received').length;
+      return `<tr onclick="openJobDetail('${j.id}')">
+        <td class="mono" style="color:var(--accent);">${j.number}</td>
+        <td><span class="prio-${j.priority}">${j.priority}</span></td>
+        <td style="font-size:12px;">${j.dateIn}</td>
+        <td><strong>${j.customer}</strong></td>
+        <td style="font-size:12px;">${[j.facility,j.station,j.position].filter(Boolean).join(' / ')||'—'}</td>
+        <td style="font-size:12px;">${[j.manufacturer,j.unitType,j.hp].filter(Boolean).join(' ')||'—'}</td>
+        <td class="mono" style="font-size:12px;color:var(--text2);">${j.serial||'—'}</td>
+        <td><span class="badge b-${j.status}">${j.status}</span></td>
+        <td style="color:${d>21?'var(--red)':d>14?'var(--accent2)':'var(--text2)'};">${d}d</td>
+        <td>${opo>0?`<span style="color:#fb923c;font-weight:700;">${opo} open</span>`:'<span style="color:var(--text3);">—</span>'}</td>
+      </tr>`;
+    }).join('');
+  } else {
+    const c=document.getElementById('jcards');
+    if(!jobs.length){c.innerHTML='<div class="empty"><p>No jobs found</p></div>';return;}
+    c.innerHTML=jobs.map(j=>{
+      const d=days(j.dateIn);
+      return `<div class="jcard s-${j.status}" onclick="openJobDetail('${j.id}')">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+          <div class="mono" style="font-size:18px;color:var(--accent);">#${j.number}</div>
+          <div style="display:flex;gap:4px;">${j.priority!=='Normal'?`<span class="badge b-${j.priority}">${j.priority}</span>`:''}<span class="badge b-${j.status}">${j.status}</span></div>
+        </div>
+        <div style="font-weight:600;font-size:13px;">${j.customer}</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:6px;">${[j.facility,j.station,j.position].filter(Boolean).join(' › ')||'—'}</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text2);background:var(--bg);padding:4px 8px;border-radius:2px;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${[j.manufacturer,j.model,j.hp].filter(Boolean).join(' ')||'No unit data'}</div>
+        <div style="display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid var(--border);">
+          <div style="font-size:11px;color:var(--text3);">S/N <span style="font-family:'Share Tech Mono',monospace;color:var(--text2);">${j.serial||'—'}</span></div>
+          <div style="font-size:11px;color:${d>14?'var(--red)':d>7?'var(--accent2)':'var(--text3)'};">${d}d</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+// ---- ASSETS ----
+function renderAssets(){
+  const srch=(v('asearch')||'').toLowerCase();
+  const map={};
+  db.jobs.forEach(j=>{
+    if(!j.serial)return;
+    if(!map[j.serial])map[j.serial]={serial:j.serial,type:j.unitType,mfr:j.manufacturer,model:j.model,hp:j.hp,voltage:j.voltage,customer:j.customer,facility:j.facility,station:j.station,jobs:[],lastDate:j.dateIn};
+    map[j.serial].jobs.push(j);
+    if(j.dateIn>map[j.serial].lastDate){map[j.serial].lastDate=j.dateIn;map[j.serial].customer=j.customer;map[j.serial].facility=j.facility;map[j.serial].station=j.station;}
+  });
+  let assets=Object.values(map).filter(a=>!srch||[a.serial,a.mfr,a.model,a.customer,a.type,a.facility].join(' ').toLowerCase().includes(srch)).sort((a,b)=>b.jobs.length-a.jobs.length);
+  const tb=document.getElementById('atbody');
+  if(!assets.length){tb.innerHTML='<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text3);">No assets with serial numbers recorded yet</td></tr>';return;}
+  tb.innerHTML=assets.map(a=>`<tr onclick="showAssetDetail('${a.serial}')">
+    <td class="mono" style="color:var(--accent);">${a.serial}</td>
+    <td style="font-size:12px;">${a.type||'—'}</td><td>${a.mfr||'—'}</td>
+    <td class="mono" style="font-size:12px;">${a.model||'—'}</td><td>${a.hp||'—'}</td><td style="font-size:12px;">${a.voltage||'—'}</td>
+    <td>${a.customer}</td>
+    <td style="font-size:12px;">${[a.facility,a.station].filter(Boolean).join(' / ')||'—'}</td>
+    <td style="text-align:center;"><strong style="color:var(--accent);font-size:16px;">${a.jobs.length}</strong></td>
+    <td>${a.lastDate}</td>
+    <td><button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();showAssetDetail('${a.serial}')">History</button></td>
+  </tr>`).join('');
+}
+
+function showAssetDetail(serial){
+  const jobs=db.jobs.filter(j=>j.serial===serial).sort((a,b)=>b.number-a.number);
+  if(!jobs.length)return;
+  const f=jobs[0];
+  alert(`ASSET HISTORY — S/N: ${serial}\n${f.manufacturer} ${f.model} ${f.hp}\n\nIn shop ${jobs.length} time(s):\n\n`+jobs.map(j=>`#${j.number} | ${j.dateIn} | ${j.status.toUpperCase()}\n  ${j.customer}${j.facility?' / '+j.facility:''}\n  ${j.complaint||'No complaint'}`).join('\n\n'));
+}
+
+// ---- CUSTOMERS ----
+function renderCustomers(){
+  const srch=(v('csearch')||'').toLowerCase();
+  const custs=db.customers.filter(c=>!srch||c.name.toLowerCase().includes(srch));
+  const tb=document.getElementById('ctbody');
+  if(!custs.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text3);">No customers yet</td></tr>';return;}
+  tb.innerHTML=custs.map(c=>{
+    const all=db.jobs.filter(j=>j.customer===c.name);
+    const act=all.filter(j=>j.status!=='complete');
+    const facs=[...new Set(all.map(j=>j.facility).filter(Boolean))];
+    return `<tr><td><strong>${c.name}</strong>${c.contact?`<div style="font-size:11px;color:var(--text3);">${c.contact}${c.phone?' · '+c.phone:''}</div>`:''}</td><td style="text-align:center;"><strong style="color:var(--accent);">${act.length}</strong></td><td style="text-align:center;">${all.length}</td><td style="font-size:12px;">${facs.map(f=>`<span class="tag">${f}</span>`).join('')||'—'}</td><td><button class="btn btn-secondary btn-sm" onclick="filterJobs('${c.name}')">Jobs</button></td></tr>`;
+  }).join('');
+
+  // Location tree
+  const tree=document.getElementById('loctree');
+  tree.innerHTML=db.customers.map(c=>{
+    const jobs=db.jobs.filter(j=>j.customer===c.name);
+    const fmap={};
+    jobs.forEach(j=>{const f=j.facility||'(No Facility)';if(!fmap[f])fmap[f]=new Set();if(j.station)fmap[f].add(j.station);});
+    if(!Object.keys(fmap).length)return'';
+    return`<div style="margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border);">
+      <div style="font-weight:600;display:flex;justify-content:space-between;margin-bottom:6px;"><span>${c.name}</span><span style="font-size:11px;color:var(--text3);">${jobs.length} job(s)</span></div>
+      ${Object.entries(fmap).map(([f,stations])=>`<div style="padding:3px 0 3px 14px;color:var(--text2);font-size:13px;">📍 ${f}${[...stations].map(s=>`<div style="padding:2px 0 2px 28px;color:var(--text3);font-family:'Share Tech Mono',monospace;font-size:11px;">↳ ${s}</div>`).join('')}</div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+function filterJobs(name){
+  showPage('jobs',document.querySelectorAll('nav button')[1]);
+  document.getElementById('jsearch').value=name;renderJobs();
+}
+
+function saveCust(){
+  const name=v('nc-name').trim();if(!name){alert('Name required');return;}
+  db.customers.push({id:uid(),name,contact:v('nc-contact'),phone:v('nc-phone'),email:v('nc-email'),notes:v('nc-notes')});
+  saveDB();closeModal('modal-cust');renderCustomers();
+  ['nc-name','nc-contact','nc-phone','nc-email','nc-notes'].forEach(id=>document.getElementById(id).value='');
+}
+
+// ---- PRINT ----
+function doPrint(){doPrintById(currentJobId);}
+function doPrintById(jid){
+  const job=db.jobs.find(j=>j.id===jid);if(!job)return;
+  const w=window.open('','_blank','width=500,height=750');
+  const loc=[job.facility,job.station,job.position].filter(Boolean).join(' / ')||'—';
+  const specs=[job.hp,job.voltage,job.phase,job.rpm?job.rpm+'RPM':''].filter(Boolean).join(' / ')||'—';
+  const specs2=[job.amps,job.enclosure,job.insulation].filter(Boolean).join(' / ')||'—';
+  const priHtml=job.priority==='Emergency'?'<div class="E">EMERGENCY</div>':job.priority==='Rush'?'<div class="R">RUSH</div>':'';
+  const poHtml=job.custPO?'<div class="lbl">Cust PO</div><div class="val">'+job.custPO+'</div>':'';
+  const promHtml=job.promised?'<div><div class="lbl">Promised</div><div class="val">'+job.promised+'</div></div>':'';
+  const snHtml=job.serial||'NOT RECORDED';
+  var html='<html><head><title>Job #'+job.number+'</title>';
+  html+='<style>body{font-family:monospace;padding:20px;max-width:420px;border:3px solid #000;margin:10px;}';
+  html+='h1{font-size:56px;margin:0;}hr{border:2px solid #000;margin:8px 0;}';
+  html+='.lbl{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#666;}';
+  html+='.val{font-size:15px;font-weight:bold;margin-bottom:6px;}';
+  html+='.sn{font-size:20px;font-weight:bold;background:#f0f0f0;padding:6px;letter-spacing:2px;}';
+  html+='.E{background:#fcc;padding:4px 8px;font-weight:bold;font-size:14px;}';
+  html+='.R{background:#fec;padding:4px 8px;font-weight:bold;font-size:14px;}';
+  html+='</style></head><body>';
+  html+='<h1>#'+job.number+'</h1>';
+  html+=priHtml;
+  html+='<hr><div class="lbl">Customer</div><div class="val">'+job.customer+'</div>';
+  html+='<div class="lbl">Location</div><div class="val" style="font-size:13px;">'+loc+'</div>';
+  html+='<hr><div class="lbl">Type</div><div class="val">'+job.unitType+'</div>';
+  html+='<div class="lbl">Manufacturer / Model</div><div class="val">'+([job.manufacturer,job.model].filter(Boolean).join(' ')||'—')+'</div>';
+  html+='<div class="lbl">Serial Number</div><div class="sn">'+snHtml+'</div>';
+  html+='<hr><div class="lbl">HP / Voltage / Phase / RPM</div><div class="val" style="font-size:13px;">'+specs+'</div>';
+  html+='<div class="lbl">Amps / Enclosure / Insulation</div><div class="val" style="font-size:13px;">'+specs2+'</div>';
+  html+='<hr><div class="lbl">Complaint</div><div class="val" style="font-weight:normal;font-size:13px;">'+(job.complaint||'—')+'</div>';
+  html+='<hr><div style="display:flex;gap:20px;flex-wrap:wrap;">';
+  html+='<div><div class="lbl">Date In</div><div class="val">'+job.dateIn+'</div></div>';
+  html+='<div><div class="lbl">By</div><div class="val">'+(job.receivedBy||'—')+'</div></div>';
+  html+=promHtml;
+  html+='</div>'+poHtml;
+  html+='<hr><div style="font-size:10px;color:#999;text-align:center;">ShopTrack</div>';
+  html+='</body></html>';
+  w.document.write(html);
+  w.document.close();
+  w.print();
+}
+
+function dl(rows,fn){const blob=new Blob([rows.map(r=>r.join(',')).join('\n')],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;a.click();}
+
+// ---- DEMO DATA ----
+function seed(){
+  if(db.jobs.length>0)return;
+  db.customers=[
+    {id:'c1',name:'City of Panama City Beach',contact:'Public Works',phone:'850-233-5100',email:'pw@pcbfl.gov',notes:'Municipal pricing, multiple lift stations'},
+    {id:'c2',name:'City of Panama City',contact:'Utilities Division',phone:'850-872-3000',email:'',notes:''},
+    {id:'c3',name:'Bay County',contact:'Engineering',phone:'850-248-8470',email:'',notes:'County contract'},
+    {id:'c4',name:'Gulf Power',contact:'Maintenance',phone:'850-444-6111',email:'',notes:'Commercial rate'},
+  ];
+  const template=[
+    {customer:'City of Panama City Beach',facility:'Millville WWTP',station:'B&R2',position:'Pump #1',unitType:'Submersible Pump',manufacturer:'Wilo',model:'TR50-2.56-4/16',serial:'650706322',hp:'10HP',voltage:'460V',rpm:'1680',phase:'3 Phase',amps:'14.2A',hz:'60',enclosure:'',insulation:'F',sf:'1.15',complaint:'Not pumping, possible impeller damage',status:'in-repair',priority:'Rush'},
+    {customer:'City of Panama City Beach',facility:'St Andrews Plant',station:'Lift Station 7',position:'Pump #2',unitType:'Motor',manufacturer:'Baldor',model:'EM3774T',serial:'F1823B1001',hp:'7.5HP',voltage:'230/460V',rpm:'1750',phase:'3 Phase',amps:'19.6A',hz:'60',enclosure:'TEFC',insulation:'F',sf:'1.15',complaint:'Overheating, tripping thermal overload',status:'diagnosis',priority:'Normal'},
+    {customer:'City of Panama City',facility:'Main Pump Station',station:'Lift Station 12',position:'Pump #1',unitType:'Submersible Pump',manufacturer:'Flygt',model:'NP 3085',serial:'TG4421993',hp:'3HP',voltage:'230V',rpm:'1450',phase:'3 Phase',amps:'9.4A',hz:'60',enclosure:'',insulation:'',sf:'',complaint:'Seal failure, water in motor winding',status:'waiting-parts',priority:'Normal'},
+    {customer:'Bay County',facility:'WTP North',station:'Chemical Feed',position:'Pump #1',unitType:'Pump',manufacturer:'Gorman Rupp',model:'T4A60S-B',serial:'1234567',hp:'5HP',voltage:'460V',rpm:'1750',phase:'3 Phase',amps:'7.2A',hz:'60',enclosure:'ODP',insulation:'B',sf:'1.0',complaint:'Leaking shaft seal, vibration',status:'ready',priority:'Normal'},
+    {customer:'Gulf Power',facility:'Plant Crist',station:'Cooling Tower',position:'Motor #2',unitType:'Motor',manufacturer:'US Motors',model:'E15S2AS3E',serial:'USM998877',hp:'15HP',voltage:'460V',rpm:'1775',phase:'3 Phase',amps:'18.6A',hz:'60',enclosure:'TEFC',insulation:'H',sf:'1.15',complaint:'Bearing failure, loud grinding noise',status:'intake',priority:'Emergency'},
+    // second visit for S/N 650706322 (old job)
+    {customer:'City of Panama City Beach',facility:'Millville WWTP',station:'B&R2',position:'Pump #1',unitType:'Submersible Pump',manufacturer:'Wilo',model:'TR50-2.56-4/16',serial:'650706322',hp:'10HP',voltage:'460V',rpm:'1680',phase:'3 Phase',amps:'14.2A',hz:'60',enclosure:'',insulation:'F',sf:'1.15',complaint:'Impeller wear, reduced flow',status:'complete',priority:'Normal'},
+  ];
+  const now=new Date();
+  template.forEach((t,i)=>{
+    const d=new Date(now);d.setDate(d.getDate()-(i===5?180:i*4));
+    db.jobs.push({id:uid(),number:db.nextJob++,dateIn:d.toISOString().split('T')[0],receivedBy:'Front Desk',observations:'',quote:'',custPO:'',promised:'',notes:[],dateOut:i===5?d.toISOString().split('T')[0]:null,...t});
+  });
+  db.pos.push({id:uid(),poNum:db.nextPO++,date:today(),jobNum:db.jobs[2].number,vendor:'Flygt / Xylem',vref:'XY-2026-44521',desc:'Seal kit NP 3085, mechanical seal assembly, O-ring kit',amt:'487.50',eta:new Date(Date.now()+5*86400000).toISOString().split('T')[0],status:'open',notes:'5-7 day lead time'});
+  saveDB();
+}
+
+
+
+// ---- BACKUP & RESTORE ----
+function backupData(){
+  try{
+    const filename='shoptrack-backup-'+today()+'.json';
+    const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=filename;
+    a.style.display='none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},200);
+    showToast('Backup saved: '+filename);
+  }catch(err){
+    alert('Backup failed: '+err.message);
+  }
+}
+
+function restoreData(event){
+  const file=event.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const parsed=JSON.parse(e.target.result);
+      if(!parsed.jobs||!parsed.customers){alert('This does not look like a valid ShopTrack backup file.');return;}
+      const jobCount=parsed.jobs.length;
+      const custCount=parsed.customers.length;
+      if(!confirm('Restore backup?\n\nThis will load:\n• '+jobCount+' jobs\n• '+custCount+' customers\n• '+(parsed.pos||[]).length+' purchase orders\n\nYour current data will be replaced.'))return;
+      db=parsed;
+      saveDB();
+      updateStats();
+      renderDash();
+      showPage('dash',document.querySelector('nav button'));
+      showToast('✓ Restored '+jobCount+' jobs successfully!');
+    }catch(err){
+      alert('Could not read backup file. Make sure it is a ShopTrack .json backup.');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value='';
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.display='block';
+  setTimeout(()=>t.style.display='none',3500);
+}
+
+
+
+// ---- WILO MODE ----
+function checkWiloMode(val){
+  const isWilo = val.toLowerCase().includes('wilo');
+  const box = document.getElementById('wilo-fields');
+  if(box) box.style.display = isWilo ? 'block' : 'none';
+  // If switching to Wilo, set manufacturer field and unit type
+  if(isWilo){
+    const typeEl = document.getElementById('nj-type');
+    if(typeEl && typeEl.value === 'Pump') typeEl.value = 'Submersible Pump';
+  }
+}
+
+function parseWiloVoltage(val){
+  // 230/460~3 means 230/460V 3-phase
+  // Auto-fill the standard voltage and phase fields
+  const voltEl = document.getElementById('nj-voltage');
+  const phaseEl = document.getElementById('nj-phase');
+  if(!val) return;
+  const cleaned = val.replace('~3','').replace('~1','').trim();
+  if(voltEl) voltEl.value = cleaned + 'V';
+  if(phaseEl){
+    if(val.includes('~3') || val.includes('3')) phaseEl.value = '3 Phase';
+    else if(val.includes('~1') || val.includes('1')) phaseEl.value = '1 Phase';
+  }
+}
+
+function getWiloData(){
+  // Collect all Wilo-specific fields and return as object
+  const box = document.getElementById('wilo-fields');
+  if(!box || box.style.display === 'none') return null;
+  return {
+    pTyp: v('nj-ptyp'),
+    mTyp: v('nj-mtyp'),
+    serial: v('nj-wilo-serial'),
+    voltage: v('nj-wilo-u'),
+    amps: v('nj-wilo-i'),
+    kw: v('nj-wilo-p'),
+    rpm: v('nj-wilo-n'),
+    hz: v('nj-wilo-f'),
+    sf: v('nj-wilo-sf'),
+    ip: v('nj-wilo-ip'),
+    mfy: v('nj-wilo-mfy'),
+    ist: v('nj-wilo-ist'),
+    so: v('nj-wilo-so'),
+    mc: v('nj-wilo-mc')
+  };
+}
+
+function clearWiloFields(){
+  ['nj-ptyp','nj-mtyp','nj-wilo-serial','nj-wilo-u','nj-wilo-i','nj-wilo-p',
+   'nj-wilo-n','nj-wilo-f','nj-wilo-sf','nj-wilo-ip','nj-wilo-mfy',
+   'nj-wilo-ist','nj-wilo-so','nj-wilo-mc'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  const box=document.getElementById('wilo-fields');
+  if(box) box.style.display='none';
+}
+
+// ---- SETTINGS & API KEY ----
+function openSettingsModal(){
+  const k = getAPIKey();
+  document.getElementById('settings-apikey').value = k ? '(key on file - paste new one to replace)' : '';
+  document.getElementById('settings-shopname').value = localStorage.getItem('shoptrack_shopname')||'';
+  document.getElementById('settings-nextjob').value = db.nextJob;
+  document.getElementById('key-status').textContent = k ? 'Key on file' : 'No key saved';
+  openModal('modal-settings');
+}
+
+function saveAPIKey(){
+  const key = document.getElementById('settings-apikey').value.trim();
+  if(!key || key.startsWith('(key on file')){
+    document.getElementById('key-status').textContent = 'No change made';
+    return;
+  }
+  if(!key.startsWith('sk-ant-')){
+    alert('That does not look like a valid Anthropic API key. It should start with sk-ant-');
+    return;
+  }
+  localStorage.setItem('shoptrack_apikey', key);
+  document.getElementById('key-status').innerHTML = '<span style="color:var(--green);">Key saved!</span>';
+}
+
+function getAPIKey(){
+  return localStorage.getItem('shoptrack_apikey')||'';
+}
+
+function toggleKeyVis(){
+  const inp = document.getElementById('settings-apikey');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+async function testAPIKey(){
+  const key = document.getElementById('settings-apikey').value.trim();
+  const stored = getAPIKey();
+  const useKey = (key && key.startsWith('sk-ant-')) ? key : stored;
+  if(!useKey){ alert('Please enter your API key first.'); return; }
+  const el = document.getElementById('key-status');
+  el.textContent = 'Testing...';
+  try{
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':useKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:10,messages:[{role:'user',content:'Hi'}]})
+    });
+    if(res.ok){
+      el.innerHTML = '<span style="color:var(--green);">Connected!</span>';
+    } else {
+      const err = await res.json();
+      el.innerHTML = '<span style="color:var(--red);">Error: ' + (err.error ? err.error.message : 'Invalid key') + '</span>';
+    }
+  } catch(e){
+    el.innerHTML = '<span style="color:var(--red);">Network error</span>';
+  }
+}
+
+function saveSettings(){
+  const key = document.getElementById('settings-apikey').value.trim();
+  if(key && key.startsWith('sk-ant-')) localStorage.setItem('shoptrack_apikey', key);
+  const name = document.getElementById('settings-shopname').value.trim();
+  if(name) localStorage.setItem('shoptrack_shopname', name);
+  const nj = parseInt(document.getElementById('settings-nextjob').value);
+  if(nj > 0) db.nextJob = nj;
+  saveDB();
+  closeModal('modal-settings');
+  showToast('Settings saved!');
+}
+
+// ---- NAMEPLATE AI SCANNER ----
+async function scanNameplate(event){
+  const file = event.target.files[0];
+  if(!file) return;
+
+  const key = getAPIKey();
+  if(!key){
+    alert('No API key found. Please click Settings and enter your Anthropic API key first.');
+    event.target.value='';
+    return;
+  }
+
+  // Show preview immediately
+  const previewReader = new FileReader();
+  previewReader.onload = function(e){
+    document.getElementById('scan-img').src = e.target.result;
+    document.getElementById('scan-preview').style.display = 'block';
+  };
+  previewReader.readAsDataURL(file);
+
+  const status = document.getElementById('scan-status');
+  status.innerHTML = '<span style="color:var(--accent);">Reading nameplate... please wait...</span>';
+
+  try{
+    const b64 = await toBase64(file);
+    const mt = file.type || 'image/jpeg';
+
+    const payload = {
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 800,
+      messages:[{
+        role:'user',
+        content:[
+          {type:'image', source:{type:'base64', media_type:mt, data:b64}},
+          {type:'text', text:'Read this nameplate carefully. If it is a WILO brand nameplate, extract: P-Typ (pump model), M-Typ (motor model), S/N (serial), U (voltage like 230/460~3), I (FLA amps), Ist (starting current), P (kW power), F (Hz), N (RPM), SF, IP, MFY (year), SO (sales order), MC. Return ONLY JSON: {"brand":"Wilo","pTyp":"","mTyp":"","serial":"","voltage":"","amps":"","ist":"","kw":"","hz":"","rpm":"","sf":"","ip":"","mfy":"","so":"","mc":""}. If NOT Wilo, return JSON: {"brand":"other","manufacturer":"","model":"","serial":"","hp":"","voltage":"","rpm":"","amps":"","phase":"","hz":"","enclosure":"","insulation":"","sf":""}. No markdown, just JSON.'}
+        ]
+      }]
+    };
+
+    let res;
+    try {
+      res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': key,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify(payload)
+      });
+    } catch(fetchErr) {
+      // CORS/network error - this happens when running as a local file
+      status.innerHTML = '<span style="color:var(--red);">Network blocked. See instructions below.</span>';
+      showCORSHelp();
+      event.target.value='';
+      return;
+    }
+
+    if(!res.ok){
+      let errMsg = 'API error ' + res.status;
+      try { const err = await res.json(); errMsg = err.error ? err.error.message : errMsg; } catch(e){}
+      status.innerHTML = '<span style="color:var(--red);">Error: ' + errMsg + '</span>';
+      return;
+    }
+
+    const data = await res.json();
+    const txt = data.content[0].text.trim().replace(/```json|```/g,'').trim();
+
+    let parsed;
+    try{ parsed = JSON.parse(txt); }
+    catch(e){
+      // Try to extract JSON from response
+      const jsonMatch = txt.match(/\{[\s\S]*\}/);
+      if(jsonMatch){ try{ parsed = JSON.parse(jsonMatch[0]); }catch(e2){ parsed = null; } }
+    }
+
+    if(!parsed){
+      status.innerHTML = '<span style="color:var(--red);">Could not read nameplate. Try a clearer photo with better lighting.</span>';
+      return;
+    }
+
+    let filled = 0;
+
+    function fillField(id, val){
+      if(!val || !val.toString().trim() || val === 'unknown') return;
+      const el = document.getElementById(id);
+      if(el){ el.value = val.toString().trim(); el.style.borderColor='var(--green)'; setTimeout(()=>el.style.borderColor='',4000); filled++; }
+    }
+
+    if(parsed.brand === 'Wilo'){
+      // Show Wilo fields and fill them
+      document.getElementById('nj-mfr').value = 'Wilo';
+      checkWiloMode('Wilo');
+      fillField('nj-ptyp', parsed.pTyp);
+      fillField('nj-mtyp', parsed.mTyp);
+      fillField('nj-wilo-serial', parsed.serial);
+      fillField('nj-serial', parsed.serial); // also fill main serial
+      fillField('nj-wilo-u', parsed.voltage);
+      fillField('nj-wilo-i', parsed.amps);
+      fillField('nj-wilo-ist', parsed.ist);
+      fillField('nj-wilo-p', parsed.kw);
+      fillField('nj-wilo-f', parsed.hz);
+      fillField('nj-wilo-n', parsed.rpm);
+      fillField('nj-wilo-sf', parsed.sf);
+      fillField('nj-wilo-ip', parsed.ip);
+      fillField('nj-wilo-mfy', parsed.mfy);
+      fillField('nj-wilo-so', parsed.so);
+      fillField('nj-wilo-mc', parsed.mc);
+      // Also fill standard fields from Wilo data
+      fillField('nj-model', parsed.pTyp); // P-Typ as primary model
+      fillField('nj-rpm', parsed.rpm);
+      fillField('nj-hz', parsed.hz);
+      fillField('nj-sf', parsed.sf);
+      // Parse voltage for standard fields
+      if(parsed.voltage) parseWiloVoltage(parsed.voltage);
+      document.getElementById('nj-type').value = 'Submersible Pump';
+    } else {
+      // Generic nameplate
+      fillField('nj-mfr', parsed.manufacturer);
+      fillField('nj-model', parsed.model);
+      fillField('nj-serial', parsed.serial);
+      fillField('nj-hp', parsed.hp);
+      fillField('nj-voltage', parsed.voltage);
+      fillField('nj-rpm', parsed.rpm);
+      fillField('nj-amps', parsed.amps);
+      fillField('nj-hz', parsed.hz);
+      fillField('nj-enc', parsed.enclosure);
+      fillField('nj-ins', parsed.insulation);
+      fillField('nj-sf', parsed.sf);
+      if(parsed.phase){
+        const ph = document.getElementById('nj-phase');
+        if(ph){ if(parsed.phase.includes('3')) ph.value='3 Phase'; else if(parsed.phase.includes('1')) ph.value='1 Phase'; }
+      }
+      if(parsed.manufacturer) checkWiloMode(parsed.manufacturer);
+    }
+
+    if(filled > 0){
+      status.innerHTML = '<span style="color:var(--green);">Filled ' + filled + ' fields! Green = auto-filled. Review and correct anything unclear.</span>';
+    } else {
+      status.innerHTML = '<span style="color:var(--accent);">Photo processed but could not extract data. Try a clearer photo.</span>';
+    }
+
+  } catch(e) {
+    status.innerHTML = '<span style="color:var(--red);">Error: ' + e.message + '</span>';
+    console.error('Scan error:', e);
+  }
+  event.target.value='';
+}
+
+function showCORSHelp(){
+  const box = document.getElementById('scan-box');
+  const helpDiv = document.getElementById('cors-help');
+  if(helpDiv) return; // already showing
+  const div = document.createElement('div');
+  div.id = 'cors-help';
+  div.style = 'margin-top:12px;background:#1a1a2e;border:1px solid var(--accent);border-radius:4px;padding:14px;font-size:12px;line-height:1.8;';
+  div.innerHTML = '<div style="font-family:Barlow Condensed,sans-serif;font-weight:700;color:var(--accent);margin-bottom:8px;">HOW TO ENABLE NAMEPLATE SCANNING</div>' +
+    'Chrome blocks API calls from local files. Fix it one of these ways:<br><br>' +
+    '<strong style="color:var(--text);">Option A — Easiest: Use Chrome with a flag (one time setup)</strong><br>' +
+    '1. Close Chrome completely<br>' +
+    '2. Right-click the Chrome shortcut on your desktop<br>' +
+    '3. Click Properties<br>' +
+    '4. In the Target field add at the end: <span style="font-family:Share Tech Mono,monospace;color:var(--accent);"> --disable-web-security --user-data-dir=C:/ChromeDev</span><br>' +
+    '5. Click OK and reopen Chrome with that shortcut<br><br>' +
+    '<strong style="color:var(--text);">Option B — Host the file (better long term)</strong><br>' +
+    'Upload the HTML file to any web host or even Google Drive and open it from there instead of as a local file.';
+  box.appendChild(div);
+}
+
+function toBase64(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result.split(',')[1]);
+    r.onerror=rej;
+    r.readAsDataURL(file);
+  });
+}
+
+loadDB();seed();updateStats();renderDash();
+</script>
+</body>
+</html>
