@@ -36,6 +36,7 @@
   .fg label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text2);margin-bottom:5px;}
   .fg input,.fg select,.fg textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:8px 12px;font-family:'Barlow',sans-serif;font-size:14px;outline:none;transition:border-color .15s;}
   .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--accent);}
+  .fg input:not(:placeholder-shown).field-error,.fg select.field-error:not([value='']){border-color:var(--red)!important;}
   .fg select option{background:var(--surface2);}
   .fg textarea{resize:vertical;min-height:70px;}
   .fr{display:grid;gap:14px;}
@@ -110,6 +111,9 @@
   .prio-Emergency{color:var(--red);font-weight:700;} .prio-Rush{color:#fb923c;font-weight:700;} .prio-Normal{color:var(--text3);}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
   .pulse{animation:pulse 1.5s infinite;}
+  .field-error{border-color:var(--red)!important;background:rgba(224,60,60,0.08)!important;}
+  .field-error:focus{border-color:var(--red)!important;box-shadow:0 0 0 2px rgba(224,60,60,0.25)!important;}
+  #req-error{display:none;background:rgba(224,60,60,0.12);border:1px solid var(--red);border-radius:4px;padding:10px 16px;color:var(--red);font-size:13px;font-weight:600;margin-bottom:14px;}
   ::-webkit-scrollbar{width:6px;height:6px;} ::-webkit-scrollbar-track{background:var(--bg);} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
   @media(max-width:900px){.g4,.g5{grid-template-columns:1fr 1fr;}.g3,.g2{grid-template-columns:1fr;}.fr2,.fr3,.fr4,.fr5{grid-template-columns:1fr 1fr;}.hstats{display:none;}}
 </style>
@@ -179,8 +183,14 @@
 
 <!-- ASSETS -->
 <div class="page" id="page-assets">
-  <div class="sbar">
-    <input id="asearch" placeholder="Search serial#, manufacturer, model, customer..." oninput="renderAssets()">
+  <div class="sbar" style="flex-wrap:wrap;gap:10px;">
+    <input id="asearch" placeholder="Search serial #, customer, location, manufacturer, model, unit type..." oninput="renderAssets()" style="flex:1;min-width:280px;">
+    <select id="asort" onchange="renderAssets()" style="background:var(--surface);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:10px 14px;font-family:'Barlow',sans-serif;font-size:14px;outline:none;cursor:pointer;">
+      <option value="date">Sort: Last Service Date</option>
+      <option value="times">Sort: Times in Shop</option>
+      <option value="customer">Sort: Customer A–Z</option>
+      <option value="serial">Sort: Serial #</option>
+    </select>
     <button class="btn btn-secondary" onclick="exportAssetsCSV()">↓ Export CSV</button>
   </div>
   <div class="card" style="padding:0;overflow:hidden;"><table class="data-table"><thead><tr><th>Serial#</th><th>Type</th><th>Manufacturer</th><th>Model</th><th>HP</th><th>Voltage</th><th>Customer</th><th>Last Location</th><th>Times In</th><th>Last Service</th><th></th></tr></thead><tbody id="atbody"></tbody></table></div>
@@ -227,17 +237,48 @@
       <div class="fg"><label>Station / Location</label><input id="nj-station" placeholder="e.g. Lift Station 12, B&R2"></div>
       <div class="fg"><label>Position</label><select id="nj-pos"><option value="">N/A</option><option>Pump #1</option><option>Pump #2</option><option>Pump #3</option><option>Motor #1</option><option>Motor #2</option><option>Unit #1</option><option>Unit #2</option><option>Other</option></select></div>
     </div>
-    <div class="sdiv">Nameplate Data — Copy Exactly From the Tag</div>
+        <div class="sdiv">Nameplate Data — Copy Exactly From the Tag</div>
 
-    <!-- WILO SPECIFIC FIELDS - shown when Wilo selected -->
-    <div id="wilo-fields" style="display:none;background:var(--bg);border:2px solid #00a0c8;border-radius:6px;padding:16px;margin-bottom:16px;">
+    <!-- UNIT TYPE + MANUFACTURER ROW - always visible -->
+    <div class="fr fr4">
+      <div class="fg">
+        <label>Manufacturer <span style="color:var(--red)">★ Required</span></label>
+        <input id="nj-mfr" placeholder="e.g. Wilo, Baldor, US Motors, Flygt" oninput="checkWiloMode(this.value);updateNameplateFields();">
+      </div>
+      <div class="fg">
+        <label>Unit Type</label>
+        <select id="nj-type" onchange="updateNameplateFields()">
+          <option value="">— Select —</option>
+          <option>Submersible Pump</option>
+          <option>Centrifugal Pump</option>
+          <option>Motor (NEMA)</option>
+          <option>Submersible Motor</option>
+          <option>Pump/Motor Combined</option>
+          <option>Blower</option>
+          <option>Gearbox</option>
+          <option>Rotating Assembly</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Serial Number <span style="color:var(--red)">★ Required</span></label>
+        <input id="nj-serial" placeholder="S/N from nameplate" style="border-color:var(--accent);">
+      </div>
+      <div class="fg">
+        <label>Catalog Number</label>
+        <input id="nj-catalog" placeholder="Cat # from nameplate">
+      </div>
+    </div>
+
+    <!-- WILO SPECIFIC FIELDS -->
+    <div id="wilo-fields" style="display:none;background:#0a1f1c;border:2px solid #00b398;border-radius:6px;padding:16px;margin-bottom:16px;box-shadow:0 0 20px rgba(0,179,152,0.15);">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;letter-spacing:2px;color:#00a0c8;">WILO</div>
-        <div style="font-size:12px;color:var(--text2);">Wilo-specific nameplate fields detected</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;letter-spacing:2px;color:#00b398;">WILO</div>
+        <div style="font-size:12px;color:var(--text2);">Wilo-specific nameplate fields</div>
       </div>
       <div class="fr fr3">
-        <div class="fg"><label>P-Typ (Pump Model)</label><input id="nj-ptyp" placeholder="e.g. FA 10.51E, FA 15.52E" style="border-color:#00a0c8;"></div>
-        <div class="fg"><label>M-Typ (Motor Model)</label><input id="nj-mtyp" placeholder="e.g. FK 17.1-4/8KEx, FK 202-4/27"></div>
+        <div class="fg"><label>P-Typ (Pump Model)</label><input id="nj-ptyp" placeholder="e.g. FA 10.51E" style="border-color:#00b398;background:#0d2420;"></div>
+        <div class="fg"><label>M-Typ (Motor Model)</label><input id="nj-mtyp" placeholder="e.g. FK 17.1-4/8KEx"></div>
         <div class="fg"><label>S/N (Serial Number)</label><input id="nj-wilo-serial" placeholder="e.g. 2700650695771" style="border-color:var(--accent);"></div>
       </div>
       <div class="fr fr4">
@@ -274,56 +315,36 @@
         <img id="scan-img" style="max-height:120px;max-width:200px;border-radius:4px;border:1px solid var(--border);">
       </div>
     </div>
-    <div class="fr fr3">
-      <div class="fg"><label>Unit Type</label><select id="nj-type"><option>Pump</option><option>Motor</option><option>Submersible Pump</option><option>Submersible Motor</option><option>Pump & Motor (Combined)</option><option>Blower</option><option>Gearbox</option><option>Other</option></select></div>
-      <div class="fg"><label>Manufacturer</label><input id="nj-mfr" placeholder="e.g. Wilo, Baldor, US Motors, Flygt" oninput="checkWiloMode(this.value)"></div>
-      <div class="fg"><label>Model / Frame</label><input id="nj-model" placeholder="e.g. TR50-2.56-4/16"></div>
-    </div>
-    <div id="wilo-section" style="display:none;background:var(--bg);border:2px solid #009bde;border-radius:6px;padding:16px;margin-bottom:16px;">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;letter-spacing:2px;color:#009bde;">WILO NAMEPLATE</div>
-        <div style="font-size:11px;color:var(--text2);">Fields specific to Wilo submersible pumps</div>
-      </div>
-      <div class="fr fr3">
-        <div class="fg"><label>P-Typ (Pump Model)</label><input id="nj-ptyp" placeholder="e.g. FA 10.51E" style="border-color:#009bde;font-family:'Share Tech Mono',monospace;"></div>
-        <div class="fg"><label>M-Typ (Motor Model)</label><input id="nj-mtyp" placeholder="e.g. FK 17.1-4/8KEx" style="border-color:#009bde;font-family:'Share Tech Mono',monospace;"></div>
-        <div class="fg"><label>S/N (Serial Number) ★</label><input id="nj-wilo-serial" placeholder="e.g. 2700650695771" style="border-color:var(--accent);font-family:'Share Tech Mono',monospace;" oninput="document.getElementById('nj-serial').value=this.value"></div>
-      </div>
-      <div class="fr fr4">
-        <div class="fg"><label>U — Voltage</label><input id="nj-wilo-u" placeholder="e.g. 230/460~3" oninput="parseWiloVoltage(this.value)"></div>
-        <div class="fg"><label>I — Amps (FLA)</label><input id="nj-wilo-i" placeholder="e.g. 18.70" oninput="document.getElementById('nj-amps').value=this.value"></div>
-        <div class="fg"><label>P — Power (kW)</label><input id="nj-wilo-p" placeholder="e.g. 6.17"></div>
-        <div class="fg"><label>N — RPM</label><input id="nj-wilo-n" placeholder="e.g. 1660" oninput="document.getElementById('nj-rpm').value=this.value"></div>
-      </div>
-      <div class="fr fr4">
-        <div class="fg"><label>F — Hz</label><input id="nj-wilo-f" placeholder="60" oninput="document.getElementById('nj-hz').value=this.value"></div>
-        <div class="fg"><label>SF — Service Factor</label><input id="nj-wilo-sf" placeholder="e.g. 1.10" oninput="document.getElementById('nj-sf').value=this.value"></div>
-        <div class="fg"><label>IP — Rating</label><input id="nj-wilo-ip" placeholder="e.g. 68" oninput="document.getElementById('nj-enc').value='IP '+this.value"></div>
-        <div class="fg"><label>MFY — Year Made</label><input id="nj-wilo-mfy" placeholder="e.g. 2026"></div>
-      </div>
-      <div class="fr fr3">
-        <div class="fg"><label>Ist — Starting Current</label><input id="nj-wilo-ist" placeholder="e.g. 72.00"></div>
-        <div class="fg"><label>Cos — Power Factor</label><input id="nj-wilo-cos" placeholder="e.g. 0.85"></div>
-        <div class="fg"><label>SO — Sales Order #</label><input id="nj-wilo-so" placeholder="e.g. 201106329-10"></div>
+
+    <!-- DYNAMIC NAMEPLATE FIELDS -->
+    <div id="nameplate-dynamic">
+      <!-- Default: blank until unit type selected -->
+      <div id="np-default" class="np-set">
+        <div class="fr fr4">
+          <div class="fg"><label>HP / KW</label><input id="nj-hp" placeholder="e.g. 10HP"></div>
+          <div class="fg"><label>Voltage</label><input id="nj-voltage" placeholder="e.g. 460V"></div>
+          <div class="fg"><label>Amps (FLA)</label><input id="nj-amps" placeholder="e.g. 14.2A"></div>
+          <div class="fg"><label>RPM</label><input id="nj-rpm" placeholder="e.g. 1750"></div>
+        </div>
+        <div class="fr fr4">
+          <div class="fg"><label>Phase</label><select id="nj-phase"><option value="">—</option><option>1 Phase</option><option>3 Phase</option></select></div>
+          <div class="fg"><label>Hz</label><input id="nj-hz" placeholder="60"></div>
+          <div class="fg"><label>Model #</label><input id="nj-model" placeholder="Model number"></div>
+          <div class="fg"><label>Frame</label><input id="nj-frame" placeholder="e.g. 184T"></div>
+        </div>
+        <div class="fr fr4">
+          <div class="fg"><label>Enclosure</label><input id="nj-enc" placeholder="TEFC, ODP..."></div>
+          <div class="fg"><label>Insulation Class</label><input id="nj-ins" placeholder="F, H..."></div>
+          <div class="fg"><label>Service Factor</label><input id="nj-sf" placeholder="1.15"></div>
+          <div class="fg"></div>
+        </div>
       </div>
     </div>
-<div class="fr fr5">
-      <div class="fg"><label>Serial Number ★</label><input id="nj-serial" placeholder="S/N from nameplate" style="border-color:var(--accent);">
-      <div class="fg"><label>HP / KW</label><input id="nj-hp" placeholder="e.g. 10HP"></div>
-      <div class="fg"><label>Voltage</label><input id="nj-voltage" placeholder="e.g. 460V"></div>
-      <div class="fg"><label>RPM</label><input id="nj-rpm" placeholder="e.g. 1750"></div>
-      <div class="fg"><label>Amps (FLA)</label><input id="nj-amps" placeholder="e.g. 14.2A"></div>
-    </div>
-    <div class="fr fr5">
-      <div class="fg"><label>Phase</label><select id="nj-phase"><option value="">—</option><option>1 Phase</option><option>3 Phase</option></select></div>
-      <div class="fg"><label>Hz</label><input id="nj-hz" placeholder="60"></div>
-      <div class="fg"><label>Enclosure</label><input id="nj-enc" placeholder="TEFC, ODP..."></div>
-      <div class="fg"><label>Insulation Class</label><input id="nj-ins" placeholder="F, H..."></div>
-      <div class="fg"><label>Service Factor</label><input id="nj-sf" placeholder="1.15"></div>
-    </div>
-    <div class="sdiv">Complaint & Observations</div>
+
+
+    <div class="sdiv">Reason for Service & Observations</div>
     <div class="fr fr2">
-      <div class="fg"><label>Customer's Complaint</label><textarea id="nj-complaint" placeholder="What is the customer reporting?"></textarea></div>
+      <div class="fg"><label>Reason for Service</label><textarea id="nj-reasonForService" placeholder="What is the customer reporting?"></textarea></div>
       <div class="fg"><label>Initial Observations (Intake)</label><textarea id="nj-obs" placeholder="What do you see when it comes in?"></textarea></div>
     </div>
     <div class="fr fr3">
@@ -331,9 +352,11 @@
       <div class="fg"><label>Quote Amount ($)</label><input type="number" id="nj-quote" placeholder="0.00" step="0.01"></div>
       <div class="fg"><label>Promised Date</label><input type="date" id="nj-promised"></div>
     </div>
+    <div id="req-error"></div>
     <div class="mfooter">
       <button class="btn btn-secondary" onclick="closeModal('modal-job')">Cancel</button>
-      <button class="btn btn-secondary" onclick="saveJob(true)">Save & Print Tag</button>
+      <button class="btn btn-secondary" onclick="saveJob(true)">🏷 Save & Print Tag</button>
+      <button class="btn btn-secondary" onclick="saveAndPrintQA()">📋 Save & Print QA Card</button>
       <button class="btn btn-primary" onclick="saveJob(false)">Save Job</button>
     </div>
   </div>
@@ -392,7 +415,7 @@
         </div>
       </div>
       <div class="g2" style="margin-top:14px;">
-        <div><div class="dl">Customer Complaint</div><div class="dv" id="d-complaint" style="background:var(--bg);padding:10px;border-radius:3px;min-height:60px;"></div></div>
+        <div><div class="dl">Reason for Service</div><div class="dv" id="d-reasonForService" style="background:var(--bg);padding:10px;border-radius:3px;min-height:60px;"></div></div>
         <div><div class="dl">Initial Observations</div><div class="dv" id="d-obs" style="background:var(--bg);padding:10px;border-radius:3px;min-height:60px;"></div></div>
       </div>
     </div>
@@ -419,8 +442,8 @@
         </div>
       </div>
       <!-- WILO EXTRA DATA -->
-      <div id="det-wilo-section" style="display:none;margin-top:14px;background:var(--bg);border:1px solid #00a0c8;border-radius:4px;padding:14px;">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;letter-spacing:2px;color:#00a0c8;margin-bottom:10px;">WILO NAMEPLATE DATA</div>
+      <div id="det-wilo-section" style="display:none;margin-top:14px;background:var(--bg);border:1px solid #00b398;border-radius:4px;padding:14px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;letter-spacing:2px;color:#00b398;margin-bottom:10px;">WILO NAMEPLATE DATA</div>
         <div class="g4">
           <div><div class="dl">P-Typ (Pump)</div><div class="dv mono" id="d-ptyp"></div></div>
           <div><div class="dl">M-Typ (Motor)</div><div class="dv mono" id="d-mtyp"></div></div>
@@ -463,7 +486,8 @@
     </div>
     <div class="mfooter">
       <button class="btn btn-secondary" onclick="closeModal('modal-detail')">Close</button>
-      <button class="btn btn-secondary" onclick="doPrint()">🖨 Print Job Tag</button>
+      <button class="btn btn-secondary" onclick="doPrint()">🏷 Print Job Tag</button>
+      <button class="btn btn-secondary" onclick="doPrintById(currentJobId)">📋 Print QA Card</button>
     </div>
   </div>
 </div>
@@ -600,14 +624,19 @@ function updateStats(){
 }
 
 // ---- NEW JOB ----
+function clearFieldErrors(){
+  document.querySelectorAll('.field-error').forEach(el=>el.classList.remove('field-error'));
+  const e=document.getElementById('req-error');if(e)e.style.display='none';
+}
 function openNewJobModal(){
   set('nj-num',db.nextJob);
   document.getElementById('nj-num').value=db.nextJob;
   document.getElementById('nj-date').value=today();
   populateCustDrop('nj-cust');
-  ['nj-by','nj-newcust','nj-facility','nj-station','nj-mfr','nj-model','nj-serial','nj-hp','nj-voltage','nj-rpm','nj-amps','nj-hz','nj-enc','nj-ins','nj-sf','nj-complaint','nj-obs','nj-cpo','nj-quote','nj-promised'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['nj-by','nj-newcust','nj-facility','nj-station','nj-mfr','nj-model','nj-serial','nj-hp','nj-voltage','nj-rpm','nj-amps','nj-hz','nj-enc','nj-ins','nj-sf','nj-reasonForService','nj-obs','nj-cpo','nj-quote','nj-promised'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   document.getElementById('nj-pri').value='Normal';
   clearWiloFields();
+  clearFieldErrors();
   document.getElementById('nj-pos').value='';
   document.getElementById('nj-type').value='Pump';
   document.getElementById('nj-phase').value='';
@@ -630,14 +659,65 @@ function fillFacilities(){
 }
 
 function saveJob(print){
+  // Clear previous validation highlights
+  document.querySelectorAll('.field-error').forEach(el=>{
+    el.classList.remove('field-error');
+  });
+  const reqErr = document.getElementById('req-error');
+  if(reqErr) reqErr.style.display='none';
+
   let custName='';
   const newC=v('nj-newcust').trim();
   const selC=v('nj-cust');
   if(newC){const nc={id:uid(),name:newC,contact:'',phone:'',email:'',notes:''};db.customers.push(nc);custName=newC;}
   else if(selC){const f=db.customers.find(c=>c.id===selC);if(f)custName=f.name;}
-  if(!custName){alert('Please select or enter a customer.');return;}
+
+  // Validate required fields
+  const isWilo = (v('nj-mfr')||'').toLowerCase().includes('wilo');
+  const missing = [];
+
+  function requireField(id, label){
+    const val = v(id);
+    if(!val || !val.trim()){
+      const el = document.getElementById(id);
+      if(el){ el.classList.add('field-error'); el.focus(); }
+      missing.push(label);
+    }
+  }
+
+  if(!custName){ 
+    const custEl = document.getElementById('nj-cust');
+    if(custEl) custEl.classList.add('field-error');
+    missing.push('Customer');
+  }
+  requireField('nj-by', 'Received By');
+  requireField('nj-facility', 'Facility / Plant');
+  requireField('nj-station', 'Station / Location');
+  requireField('nj-type', 'Unit Type');
+  requireField('nj-mfr', 'Manufacturer');
+  if(isWilo){
+    requireField('nj-ptyp', 'P-Typ (Pump Model)');
+    requireField('nj-wilo-serial', 'Serial Number');
+  } else {
+    requireField('nj-serial', 'Serial Number');
+    requireField('nj-model', 'Model #');
+    requireField('nj-hp', 'HP / KW');
+    requireField('nj-voltage', 'Voltage');
+  }
+  requireField('nj-reasonForService', 'Reason for Service');
+
+  if(missing.length > 0){
+    const errEl = document.getElementById('req-error');
+    if(errEl){
+      errEl.textContent = 'Required fields missing: ' + missing.join(', ');
+      errEl.style.display = 'block';
+      errEl.scrollIntoView({behavior:'smooth', block:'center'});
+    } else {
+      alert('Required fields missing:\n\n' + missing.join('\n') + '\n\nEnter N/A if not applicable.');
+    }
+    return;
+  }
   // Handle Wilo vs standard fields
-  const isWilo = v('nj-mfr').toLowerCase().includes('wilo');
   const serialNum = isWilo ? v('nj-wilo-serial') : v('nj-serial');
   const modelVal = isWilo ? (v('nj-ptyp') + (v('nj-mtyp') ? ' / ' + v('nj-mtyp') : '')) : v('nj-model');
   const job={id:uid(),number:db.nextJob++,dateIn:v('nj-date'),receivedBy:v('nj-by'),customer:custName,
@@ -646,13 +726,22 @@ function saveJob(print){
     model:modelVal,
     pTyp:v('nj-ptyp'),mTyp:v('nj-mtyp'),
     serial:serialNum,
+    catalog:v('nj-catalog'),
     soNumber:v('nj-so'),mfy:v('nj-mfy'),
+    frame:v('nj-frame'),motorModel:v('nj-motormodel'),
     hp:v('nj-hp'),voltage:v('nj-voltage'),rpm:v('nj-rpm'),phase:v('nj-phase'),
     amps:v('nj-amps'),hz:v('nj-hz'),enclosure:v('nj-enc'),insulation:v('nj-ins'),sf:v('nj-sf'),
-    complaint:v('nj-complaint'),observations:v('nj-obs'),priority:v('nj-pri'),quote:v('nj-quote'),
+    leadLen:v('nj-leadlen'),impeller:v('nj-impeller'),gpm:v('nj-gpm'),tdh:v('nj-tdh'),
+    suction:v('nj-suction'),discharge:v('nj-discharge'),duty:v('nj-duty'),
+    cfm:v('nj-cfm'),pressure:v('nj-pressure'),ratio:v('nj-ratio'),
+    inputRpm:v('nj-inputrpm'),outputRpm:v('nj-outputrpm'),lubeType:v('nj-lubetype'),
+    shaftSize:v('nj-shaftsize'),bearing1:v('nj-bearing1'),bearing2:v('nj-bearing2'),weight:v('nj-weight'),
+    wiloData:getWiloData(),
+    reasonForService:v('nj-reasonForService'),observations:v('nj-obs'),priority:v('nj-pri'),quote:v('nj-quote'),
     custPO:v('nj-cpo'),promised:v('nj-promised'),status:'intake',notes:[],dateOut:null};
   db.jobs.push(job);saveDB();closeModal('modal-job');updateStats();renderDash();
   if(print)doPrintById(job.id);
+  return job.id;
 }
 
 // ---- JOB DETAIL ----
@@ -668,7 +757,7 @@ function openJobDetail(jid){
   document.querySelectorAll('.pstep').forEach((s,i)=>{s.classList.remove('active','past');if(i===idx)s.classList.add('active');else if(i<idx)s.classList.add('past');});
   set('d-cust',job.customer);set('d-fac',job.facility||'—');set('d-sta',job.station||'—');set('d-pos',job.position||'—');
   set('d-datein',job.dateIn||'—');set('d-promised',job.promised||'—');set('d-cpo',job.custPO||'—');set('d-quote',money(job.quote));
-  set('d-complaint',job.complaint||'—');set('d-obs',job.observations||'—');
+  set('d-reasonForService',job.reasonForService||'—');set('d-obs',job.observations||'—');
   set('d-type',job.unitType||'—');set('d-mfr',job.manufacturer||'—');set('d-model',job.model||'—');
   set('d-serial',job.serial||'⚠ NOT RECORDED');
   set('d-hp',job.hp||'—');set('d-voltage',job.voltage||'—');set('d-phase',job.phase||'—');
@@ -724,7 +813,7 @@ function renderDetHistory(job){
   const rel=db.jobs.filter(j=>j.serial===job.serial&&j.id!==job.id).sort((a,b)=>b.number-a.number);
   hcnt.innerHTML=rel.length>0?`<span style="background:var(--blue);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;margin-left:4px;">${rel.length}</span>`:'';
   if(rel.length===0){el.innerHTML=`<div style="padding:16px;"><div style="color:var(--text3);">First time this unit has been in the shop.</div><div style="font-family:'Share Tech Mono',monospace;color:var(--accent);margin-top:6px;">S/N: ${job.serial}</div></div>`;return;}
-  el.innerHTML=`<div style="font-size:12px;color:var(--text2);margin-bottom:10px;">S/N <span class="mono" style="color:var(--accent);">${job.serial}</span> has been in the shop <strong style="color:var(--text);">${rel.length}</strong> other time(s)</div>`+rel.map(r=>`<div style="background:var(--bg);border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:3px;padding:12px;margin-bottom:8px;cursor:pointer;" onclick="openJobDetail('${r.id}')"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span class="mono" style="color:var(--accent);">Job #${r.number}</span><span class="badge b-${r.status}">${r.status}</span></div><div style="font-size:12px;color:var(--text2);">${r.dateIn} — ${r.customer}${r.facility?' / '+r.facility:''}</div><div style="font-size:13px;margin-top:4px;">${r.complaint||'No complaint recorded'}</div></div>`).join('');
+  el.innerHTML=`<div style="font-size:12px;color:var(--text2);margin-bottom:10px;">S/N <span class="mono" style="color:var(--accent);">${job.serial}</span> has been in the shop <strong style="color:var(--text);">${rel.length}</strong> other time(s)</div>`+rel.map(r=>`<div style="background:var(--bg);border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:3px;padding:12px;margin-bottom:8px;cursor:pointer;" onclick="openJobDetail('${r.id}')"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span class="mono" style="color:var(--accent);">Job #${r.number}</span><span class="badge b-${r.status}">${r.status}</span></div><div style="font-size:12px;color:var(--text2);">${r.dateIn} — ${r.customer}${r.facility?' / '+r.facility:''}</div><div style="font-size:13px;margin-top:4px;">${r.reasonForService||'No reasonForService recorded'}</div></div>`).join('');
 }
 
 function addNote(){
@@ -854,7 +943,7 @@ function renderJobs(){
   const pf=v('jfpri')||'';
   const PRI={Emergency:0,Rush:1,Normal:2};
   let jobs=db.jobs.filter(j=>{
-    return (!sf||j.status===sf)&&(!pf||j.priority===pf)&&(!srch||[j.number?.toString(),j.customer,j.serial,j.manufacturer,j.model,j.station,j.facility,j.complaint,j.position].join(' ').toLowerCase().includes(srch));
+    return (!sf||j.status===sf)&&(!pf||j.priority===pf)&&(!srch||[j.number?.toString(),j.customer,j.serial,j.manufacturer,j.model,j.station,j.facility,j.reasonForService,j.position].join(' ').toLowerCase().includes(srch));
   }).sort((a,b)=>{
     const pd=(PRI[a.priority]||2)-(PRI[b.priority]||2);
     return pd!==0?pd:b.number-a.number;
@@ -904,6 +993,7 @@ function renderJobs(){
 // ---- ASSETS ----
 function renderAssets(){
   const srch=(v('asearch')||'').toLowerCase();
+  const sortBy=document.getElementById('asort')?document.getElementById('asort').value:'date';
   const map={};
   db.jobs.forEach(j=>{
     if(!j.serial)return;
@@ -911,7 +1001,16 @@ function renderAssets(){
     map[j.serial].jobs.push(j);
     if(j.dateIn>map[j.serial].lastDate){map[j.serial].lastDate=j.dateIn;map[j.serial].customer=j.customer;map[j.serial].facility=j.facility;map[j.serial].station=j.station;}
   });
-  let assets=Object.values(map).filter(a=>!srch||[a.serial,a.mfr,a.model,a.customer,a.type,a.facility].join(' ').toLowerCase().includes(srch)).sort((a,b)=>b.jobs.length-a.jobs.length);
+  let assets=Object.values(map).filter(a=>{
+    if(!srch)return true;
+    const haystack=[a.serial,a.mfr,a.model,a.customer,a.type,a.facility,a.station,a.hp,a.voltage].join(' ').toLowerCase();
+    return haystack.includes(srch);
+  });
+  // Sort
+  if(sortBy==='date') assets.sort((a,b)=>(b.lastDate||'').localeCompare(a.lastDate||''));
+  else if(sortBy==='times') assets.sort((a,b)=>b.jobs.length-a.jobs.length);
+  else if(sortBy==='customer') assets.sort((a,b)=>(a.customer||'').localeCompare(b.customer||''));
+  else if(sortBy==='serial') assets.sort((a,b)=>(a.serial||'').localeCompare(b.serial||''));
   const tb=document.getElementById('atbody');
   if(!assets.length){tb.innerHTML='<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text3);">No assets with serial numbers recorded yet</td></tr>';return;}
   tb.innerHTML=assets.map(a=>`<tr onclick="showAssetDetail('${a.serial}')">
@@ -930,7 +1029,7 @@ function showAssetDetail(serial){
   const jobs=db.jobs.filter(j=>j.serial===serial).sort((a,b)=>b.number-a.number);
   if(!jobs.length)return;
   const f=jobs[0];
-  alert(`ASSET HISTORY — S/N: ${serial}\n${f.manufacturer} ${f.model} ${f.hp}\n\nIn shop ${jobs.length} time(s):\n\n`+jobs.map(j=>`#${j.number} | ${j.dateIn} | ${j.status.toUpperCase()}\n  ${j.customer}${j.facility?' / '+j.facility:''}\n  ${j.complaint||'No complaint'}`).join('\n\n'));
+  alert(`ASSET HISTORY — S/N: ${serial}\n${f.manufacturer} ${f.model} ${f.hp}\n\nIn shop ${jobs.length} time(s):\n\n`+jobs.map(j=>`#${j.number} | ${j.dateIn} | ${j.status.toUpperCase()}\n  ${j.customer}${j.facility?' / '+j.facility:''}\n  ${j.reasonForService||'No reasonForService'}`).join('\n\n'));
 }
 
 // ---- CUSTOMERS ----
@@ -972,18 +1071,30 @@ function saveCust(){
   ['nc-name','nc-contact','nc-phone','nc-email','nc-notes'].forEach(id=>document.getElementById(id).value='');
 }
 
+
+function saveAndPrintQA(){
+  const jid = saveJob(false);
+  if(!jid) return; // validation failed
+  setTimeout(()=>{ doPrintById(jid); }, 300);
+}
 // ---- PRINT ----
 function doPrint(){doPrintById(currentJobId);}
+
 function doPrintById(jid){
   const job=db.jobs.find(j=>j.id===jid);if(!job)return;
-  const w=window.open('','_blank','width=500,height=750');
+  // Route to correct card based on unit type
+  const type = (job.unitType||'').toLowerCase();
+  if(type.includes('submersible pump') || type.includes('pump')){
+    printSubmersiblePumpCard(job);
+  } else {
+    printGenericJobTag(job);
+  }
+}
+
+function printGenericJobTag(job){
   const loc=[job.facility,job.station,job.position].filter(Boolean).join(' / ')||'—';
   const specs=[job.hp,job.voltage,job.phase,job.rpm?job.rpm+'RPM':''].filter(Boolean).join(' / ')||'—';
-  const specs2=[job.amps,job.enclosure,job.insulation].filter(Boolean).join(' / ')||'—';
   const priHtml=job.priority==='Emergency'?'<div class="E">EMERGENCY</div>':job.priority==='Rush'?'<div class="R">RUSH</div>':'';
-  const poHtml=job.custPO?'<div class="lbl">Cust PO</div><div class="val">'+job.custPO+'</div>':'';
-  const promHtml=job.promised?'<div><div class="lbl">Promised</div><div class="val">'+job.promised+'</div></div>':'';
-  const snHtml=job.serial||'NOT RECORDED';
   var html='<html><head><title>Job #'+job.number+'</title>';
   html+='<style>body{font-family:monospace;padding:20px;max-width:420px;border:3px solid #000;margin:10px;}';
   html+='h1{font-size:56px;margin:0;}hr{border:2px solid #000;margin:8px 0;}';
@@ -993,27 +1104,252 @@ function doPrintById(jid){
   html+='.E{background:#fcc;padding:4px 8px;font-weight:bold;font-size:14px;}';
   html+='.R{background:#fec;padding:4px 8px;font-weight:bold;font-size:14px;}';
   html+='</style></head><body>';
-  html+='<h1>#'+job.number+'</h1>';
-  html+=priHtml;
+  html+='<h1>#'+job.number+'</h1>'+priHtml;
   html+='<hr><div class="lbl">Customer</div><div class="val">'+job.customer+'</div>';
   html+='<div class="lbl">Location</div><div class="val" style="font-size:13px;">'+loc+'</div>';
   html+='<hr><div class="lbl">Type</div><div class="val">'+job.unitType+'</div>';
   html+='<div class="lbl">Manufacturer / Model</div><div class="val">'+([job.manufacturer,job.model].filter(Boolean).join(' ')||'—')+'</div>';
-  html+='<div class="lbl">Serial Number</div><div class="sn">'+snHtml+'</div>';
-  html+='<hr><div class="lbl">HP / Voltage / Phase / RPM</div><div class="val" style="font-size:13px;">'+specs+'</div>';
-  html+='<div class="lbl">Amps / Enclosure / Insulation</div><div class="val" style="font-size:13px;">'+specs2+'</div>';
-  html+='<hr><div class="lbl">Complaint</div><div class="val" style="font-weight:normal;font-size:13px;">'+(job.complaint||'—')+'</div>';
-  html+='<hr><div style="display:flex;gap:20px;flex-wrap:wrap;">';
-  html+='<div><div class="lbl">Date In</div><div class="val">'+job.dateIn+'</div></div>';
-  html+='<div><div class="lbl">By</div><div class="val">'+(job.receivedBy||'—')+'</div></div>';
-  html+=promHtml;
-  html+='</div>'+poHtml;
-  html+='<hr><div style="font-size:10px;color:#999;text-align:center;">ShopTrack</div>';
+  html+='<div class="lbl">Serial Number</div><div class="sn">'+(job.serial||'NOT RECORDED')+'</div>';
+  html+='<hr><div class="lbl">Specs</div><div class="val" style="font-size:13px;">'+specs+'</div>';
+  html+='<hr><div class="lbl">Reason for Service</div><div class="val" style="font-weight:normal;font-size:13px;">'+(job.reasonForService||'—')+'</div>';
+  html+='<hr><div class="lbl">Date In</div><div class="val">'+job.dateIn+'</div>';
   html+='</body></html>';
-  w.document.write(html);
-  w.document.close();
-  w.print();
+  const blob = new Blob([html], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  const w = window.open(url, '_blank');
+  if(!w){
+    alert('Popup blocked! Click the popup blocked icon in your address bar and allow popups, then try again.');
+    return;
+  }
+  setTimeout(()=>{ try{ w.print(); } catch(e){} }, 600);
 }
+
+function printSubmersiblePumpCard(job){
+  const isWilo = (job.manufacturer||'').toLowerCase().includes('wilo');
+  const pumpModel = isWilo ? (job.pTyp||'') : (job.model||'');
+  const motorModel = isWilo ? (job.mTyp||'') : (job.motorModel||'');
+  const serial = job.serial || '';
+  const voltage = (job.wiloData && job.wiloData.voltage) ? job.wiloData.voltage : (job.voltage||'');
+  const amps = (job.wiloData && job.wiloData.amps) ? job.wiloData.amps : (job.amps||'');
+  const hp = (job.wiloData && job.wiloData.kw) ? job.wiloData.kw+' kW' : (job.hp||'');
+  const rpm = (job.wiloData && job.wiloData.rpm) ? job.wiloData.rpm : (job.rpm||'');
+  const sf = (job.wiloData && job.wiloData.sf) ? job.wiloData.sf : (job.sf||'');
+
+  var h = '<!DOCTYPE html><html><head><meta charset="UTF-8">';
+  h += '<title>Pump Card - Job #'+job.number+'</title>';
+  h += '<style>';
+  h += '@page{size:letter;margin:0.4in 0.4in 0.4in 0.4in;}';
+  h += 'body{font-family:Arial,sans-serif;font-size:8.5pt;color:#000;margin:0;padding:0;}';
+  h += '.page{width:100%;}';
+  h += '.hdr{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2.5px solid #000;padding-bottom:4px;margin-bottom:6px;}';
+  h += '.co-name{font-size:13pt;font-weight:bold;line-height:1.2;}';
+  h += '.co-sub{font-size:7.5pt;color:#333;}';
+  h += '.job-box{text-align:right;}';
+  h += '.job-num{font-size:22pt;font-weight:bold;line-height:1;}';
+  h += '.job-lbl{font-size:7pt;text-transform:uppercase;letter-spacing:1px;color:#555;}';
+  h += '.title{text-align:center;font-size:11pt;font-weight:bold;text-transform:uppercase;letter-spacing:1px;border:1.5px solid #000;padding:3px;margin-bottom:5px;background:#f0f0f0;}';
+  h += 'table{width:100%;border-collapse:collapse;margin-bottom:4px;}';
+  h += 'td,th{border:1px solid #000;padding:2px 4px;font-size:7.5pt;vertical-align:middle;}';
+  h += 'th{background:#e0e0e0;font-weight:bold;text-align:center;font-size:7pt;text-transform:uppercase;letter-spacing:0.5px;}';
+  h += '.lbl{font-size:6.5pt;color:#555;text-transform:uppercase;letter-spacing:0.3px;display:block;line-height:1;}';
+  h += '.val{font-size:8.5pt;font-weight:bold;display:block;min-height:11px;}';
+  h += '.sec{font-size:8pt;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;background:#d0d0d0;text-align:center;border:1px solid #000;padding:2px;margin-top:4px;}';
+  h += '.yn{text-align:center;font-size:8pt;}';
+  h += '.write{min-height:13px;border-bottom:1px solid #ccc;display:block;}';
+  h += '.appr{border:2px solid #000;padding:4px 10px;text-align:center;font-size:9pt;font-weight:bold;display:inline-block;min-width:120px;}';
+  h += '.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0;}';
+  h += '.pf{text-align:center;font-size:8pt;}';
+  h += '.noline{border:none!important;}';
+  h += '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}';
+  h += '</style></head><body><div class="page">';
+
+  // HEADER
+  h += '<div class="hdr">';
+  h += '<div><div class="co-name">AAG Electric Motors &amp; Pumps, Inc.</div>';
+  h += '<div class="co-sub">2340 Industrial Drive &nbsp;|&nbsp; Panama City, FL 32405 &nbsp;|&nbsp; 850-763-9386</div>';
+  h += '<div style="font-size:9pt;font-weight:bold;margin-top:3px;">SUBMERSIBLE PUMP — Quality Assurance Documentation</div></div>';
+  h += '<div class="job-box"><div class="job-lbl">Job Number</div><div class="job-num">#'+job.number+'</div>';
+  h += '<div style="font-size:7.5pt;">Date: <span style="border-bottom:1px solid #000;display:inline-block;min-width:70px;">'+(job.dateIn||'')+'</span></div></div>';
+  h += '</div>';
+
+  // UNIT INFO ROW
+  h += '<table><tr>';
+  h += '<td colspan="3"><span class="lbl">Customer</span><span class="val">'+job.customer+'</span></td>';
+  h += '<td colspan="3"><span class="lbl">Facility / Lift Station</span><span class="val">'+[job.facility,job.station].filter(Boolean).join(' — ')+'</span></td>';
+  h += '<td><span class="lbl">Special Instructions</span><span class="val write">&nbsp;</span></td>';
+  h += '</tr></table>';
+
+  // NAMEPLATE DATA
+  h += '<div class="sec">Nameplate Data</div>';
+  h += '<table><tr>';
+  h += '<td><span class="lbl">Make</span><span class="val">'+(job.manufacturer||'')+'</span></td>';
+  h += '<td colspan="2"><span class="lbl">Pump Model (P-Typ)</span><span class="val">'+pumpModel+'</span></td>';
+  h += '<td colspan="2"><span class="lbl">Motor Model (M-Typ)</span><span class="val">'+motorModel+'</span></td>';
+  h += '<td><span class="lbl">Serial Number</span><span class="val" style="font-size:9pt;font-weight:bold;">'+serial+'</span></td>';
+  h += '</tr><tr>';
+  h += '<td><span class="lbl">HP / kW</span><span class="val">'+hp+'</span></td>';
+  h += '<td><span class="lbl">Voltage</span><span class="val">'+voltage+'</span></td>';
+  h += '<td><span class="lbl">AMPS</span><span class="val">'+amps+'</span></td>';
+  h += '<td><span class="lbl">RPM</span><span class="val">'+rpm+'</span></td>';
+  h += '<td><span class="lbl">Service Factor</span><span class="val">'+sf+'</span></td>';
+  h += '<td><span class="lbl">Impeller Code</span><span class="val write">&nbsp;</span></td>';
+  h += '</tr><tr>';
+  h += '<td><span class="lbl">Impeller Trim</span><span class="val write">&nbsp;</span></td>';
+  h += '<td style="text-align:center;"><span class="lbl">Power Cable</span><span class="val">YES &nbsp;/&nbsp; NO</span></td>';
+  h += '<td style="text-align:center;"><span class="lbl">Sensor Cable</span><span class="val">YES &nbsp;/&nbsp; NO</span></td>';
+  h += '<td style="text-align:center;"><span class="lbl">Moisture Probe</span><span class="val">YES &nbsp;/&nbsp; NO</span></td>';
+  h += '<td style="text-align:center;"><span class="lbl">Pump Coupling</span><span class="val">YES &nbsp;/&nbsp; NO</span></td>';
+  h += '<td><span class="lbl">Received By</span><span class="val">'+(job.receivedBy||'')+'</span></td>';
+  h += '</tr></table>';
+
+  // INCOMING TEST
+  h += '<div class="sec">Pump Incoming Test</div>';
+  h += '<table><tr>';
+  h += '<th style="width:18%;">Item</th><th style="width:22%;">Reading</th><th style="width:10%;">A</th><th style="width:10%;">B</th><th style="width:10%;">C</th><th>Notes</th>';
+  h += '</tr>';
+  h += '<tr><td>Shaft Turns Free</td><td class="yn">YES &nbsp;/&nbsp; NO</td><td></td><td></td><td></td><td></td></tr>';
+  h += '<tr><td>MEG / Volt</td><td></td><td></td><td></td><td></td><td></td></tr>';
+  h += '<tr><td>Low Ohm &nbsp;<small>A-B &nbsp; A-C &nbsp; B-C</small></td><td></td><td></td><td></td><td></td><td></td></tr>';
+  h += '<tr><td>Amps</td><td></td><td></td><td></td><td></td><td></td></tr>';
+  h += '<tr><td>Voltage</td><td></td><td></td><td></td><td></td><td></td></tr>';
+  h += '<tr><td>Overloads</td><td class="yn">YES &nbsp;/&nbsp; NO</td><td></td><td></td><td></td><td></td></tr>';
+  h += '</table>';
+
+  // STATOR TEST
+  h += '<div class="sec">Stator Test Before Assembly</div>';
+  h += '<table><tr>';
+  h += '<th style="width:18%;">Item</th><th style="width:22%;">Reading</th><th style="width:10%;">A</th><th style="width:10%;">B</th><th style="width:10%;">C</th><th>Notes</th>';
+  h += '</tr>';
+  h += '<tr><td>MEG / Volts</td><td></td><td></td><td></td><td></td><td></td></tr>';
+  h += '<tr><td>Phase Bal Volts / Amps</td><td></td><td></td><td></td><td></td><td></td></tr>';
+  h += '<tr><td>Overloads Test</td><td class="yn">YES &nbsp;/&nbsp; NO</td><td></td><td></td><td></td><td></td></tr>';
+  h += '</table>';
+
+  // DISASSEMBLY CONDITIONS
+  h += '<div class="sec">Disassembly — Conditions Found</div>';
+  h += '<table><tr>';
+  h += '<th style="width:25%;">Condition</th><th style="width:10%;">Found</th>';
+  h += '<th style="width:25%;">Condition</th><th style="width:10%;">Found</th>';
+  h += '<th style="width:25%;">Condition</th><th style="width:10%;">Found</th>';
+  h += '</tr>';
+  const conditions = [
+    'Open Circuit','Grounded','Shorted','Insulation','Cable Failure','Wrong Voltage',
+    'Overload','Misconnected','Water in Seal Chamber','Water in Motor Housing',
+    'Water on Terminal Board','Bearing Failure','Casting Failure / Wear','Manufacturer Defect'
+  ];
+  for(let i=0;i<conditions.length;i+=3){
+    h += '<tr>';
+    for(let j=0;j<3;j++){
+      if(i+j < conditions.length){
+        h += '<td>'+conditions[i+j]+'</td><td class="yn">Y &nbsp;/&nbsp; N</td>';
+      } else {
+        h += '<td></td><td></td>';
+      }
+    }
+    h += '</tr>';
+  }
+  h += '</table>';
+
+  // COMPONENT INSPECTION - compact 2 col
+  h += '<div class="sec">Component Inspection (P = Pass, F = Fail)</div>';
+  h += '<table><tr>';
+  h += '<th style="width:22%;">Component</th><th style="width:5%;">Init</th><th style="width:5%;">P/F</th><th style="width:18%;">Part # / Notes</th>';
+  h += '<th style="width:22%;">Component</th><th style="width:5%;">Init</th><th style="width:5%;">P/F</th><th style="width:18%;">Part # / Notes</th>';
+  h += '</tr>';
+  const components = [
+    'Motor Housing','Cable Entry Trumpet','Cable Entry Poured','Power Cable',
+    '# of Conductors','Length of Cable','Sensor Cable Type','Moisture Cable',
+    'Pump Coupling','Pump Coupling Gasket','Volute','Volute Suction Port',
+    'Stationary Wear Ring','Impeller','Impeller Coupling Fit','Mobile Wear Ring',
+    'Oil Level Motor','Oil Level Seal Chamber','Oil Condition','Terminal Board',
+    'Upper Bearing','Lower Bearing','Mech Seal Upper','Mech Seal Lower',
+    'Shaft Brg Fit Upper','Shaft Brg Fit Lower','Shaft Seal Fit','Shaft Impeller Fit',
+    'Shaft Keyway','Shaft Impeller Bolt','Heat Exchanger','Housing Seal Seat',
+    'Upper Brg Housing Fit','Lower Brg Housing Fit','Stator Winding','Impeller Fixture'
+  ];
+  for(let i=0;i<components.length;i+=2){
+    h += '<tr style="height:14px;">';
+    h += '<td style="font-size:7pt;">'+components[i]+'</td><td></td><td class="pf">P/F</td><td></td>';
+    if(i+1 < components.length){
+      h += '<td style="font-size:7pt;">'+components[i+1]+'</td><td></td><td class="pf">P/F</td><td></td>';
+    } else {
+      h += '<td></td><td></td><td></td><td></td>';
+    }
+    h += '</tr>';
+  }
+  h += '</table>';
+
+  // FINAL TEST RUN
+  h += '<div class="sec">Pump Final Test Run</div>';
+  h += '<table><tr>';
+  h += '<th style="width:18%;">Item</th><th style="width:22%;">Reading</th><th style="width:10%;">A</th><th style="width:10%;">B</th><th style="width:10%;">C</th><th>Notes</th>';
+  h += '</tr>';
+  h += '<tr><td>Shaft Turns Free</td><td class="yn">YES &nbsp;/&nbsp; NO</td><td></td><td></td><td></td><td></td></tr>';
+  h += '<tr><td>MEG OHMS / VOLTS</td><td></td><td></td><td></td><td></td><td></td></tr>';
+  h += '<tr><td>Run Voltage</td><td></td><td></td><td></td><td></td><td></td></tr>';
+  h += '<tr><td>Low Ohm &nbsp;<small>A-B &nbsp; A-C &nbsp; B-C</small></td><td></td><td></td><td></td><td></td><td></td></tr>';
+  h += '<tr><td>Amps</td><td></td><td></td><td></td><td></td><td></td></tr>';
+  h += '<tr><td>Vibration</td><td></td><td></td><td></td><td></td><td></td></tr>';
+  h += '</table>';
+  h += '<table><tr>';
+  h += '<td style="width:33%;"><span class="lbl">Power Leads — Number or Color Config</span><span class="write">&nbsp;</span></td>';
+  h += '<td style="width:33%;"><span class="lbl">Sensor Leads — Number or Color Config</span><span class="write">&nbsp;</span></td>';
+  h += '<td style="width:34%;"><span class="lbl">Moisture Leads — Number or Color Config</span><span class="write">&nbsp;</span></td>';
+  h += '</tr></table>';
+
+  // PARTS REQUIRED
+  h += '<div class="sec">Parts Required</div>';
+  h += '<table><tr>';
+  h += '<th style="width:6%;">Qty</th><th style="width:38%;">Part Description</th><th style="width:20%;">Part # / Size</th><th style="width:18%;">Source</th><th style="width:18%;">Notes</th>';
+  h += '</tr>';
+  for(let i=0;i<5;i++){
+    h += '<tr style="height:16px;"><td></td><td></td><td></td><td class="yn">INV &nbsp;/&nbsp; ORDER</td><td></td></tr>';
+  }
+  h += '</table>';
+
+  // FINAL INSPECTION
+  h += '<div class="sec">Final Inspection</div>';
+  h += '<table><tr>';
+  h += '<th style="width:28%;">Item</th><th style="width:8%;">Result</th>';
+  h += '<th style="width:28%;">Item</th><th style="width:8%;">Result</th>';
+  h += '<th style="width:28%;">Item</th><th></th>';
+  h += '</tr>';
+  const finalItems = [
+    ['Painted','yn'],['Power Leads Labeled','yn'],['Sensor Leads Labeled','yn'],
+    ['Coupling Installed','yn'],['Coupling Gasket','yn'],['Oil Filled Motor','yn'],
+    ['Oil Filled Seal Chamber','yn'],['Name Plate Legible','yn'],['Ready to Ship','yn']
+  ];
+  for(let i=0;i<finalItems.length;i+=3){
+    h += '<tr>';
+    for(let j=0;j<3;j++){
+      if(i+j < finalItems.length){
+        h += '<td style="font-size:7.5pt;">'+finalItems[i+j][0]+'</td><td class="yn">Y / N</td>';
+      } else { h += '<td></td><td></td>'; }
+    }
+    h += '</tr>';
+  }
+  h += '</table>';
+
+  // APPROVAL ROW
+  h += '<table style="margin-top:4px;"><tr>';
+  h += '<td style="width:40%;padding:4px;"><span class="lbl">Tech Signature</span><span class="write" style="min-height:18px;">&nbsp;</span></td>';
+  h += '<td style="width:40%;padding:4px;"><span class="lbl">Supervisor Final Approval</span><span class="write" style="min-height:18px;">&nbsp;</span></td>';
+  h += '<td style="width:20%;text-align:center;padding:4px;"><div style="border:2px solid #000;padding:4px;font-weight:bold;font-size:8pt;">QUALITY<br>APPROVED<br><span style="font-size:7pt;font-weight:normal;">Initials: _______</span></div></td>';
+  h += '</tr></table>';
+
+  h += '</div></body></html>';
+
+  // Open in new tab - user prints with Ctrl+P or the print dialog auto-opens
+  const blob = new Blob([h], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  const w = window.open(url, '_blank');
+  if(!w){
+    alert('Popup blocked!\n\nTo fix:\n1. Look for a popup blocked icon in your Chrome address bar (top right)\n2. Click it and select Always allow popups from this site\n3. Then try again');
+    return;
+  }
+  setTimeout(()=>{ try{ w.print(); } catch(e){} }, 800);
+}
+
 
 function dl(rows,fn){const blob=new Blob([rows.map(r=>r.join(',')).join('\n')],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;a.click();}
 
@@ -1027,13 +1363,13 @@ function seed(){
     {id:'c4',name:'Gulf Power',contact:'Maintenance',phone:'850-444-6111',email:'',notes:'Commercial rate'},
   ];
   const template=[
-    {customer:'City of Panama City Beach',facility:'Millville WWTP',station:'B&R2',position:'Pump #1',unitType:'Submersible Pump',manufacturer:'Wilo',model:'TR50-2.56-4/16',serial:'650706322',hp:'10HP',voltage:'460V',rpm:'1680',phase:'3 Phase',amps:'14.2A',hz:'60',enclosure:'',insulation:'F',sf:'1.15',complaint:'Not pumping, possible impeller damage',status:'in-repair',priority:'Rush'},
-    {customer:'City of Panama City Beach',facility:'St Andrews Plant',station:'Lift Station 7',position:'Pump #2',unitType:'Motor',manufacturer:'Baldor',model:'EM3774T',serial:'F1823B1001',hp:'7.5HP',voltage:'230/460V',rpm:'1750',phase:'3 Phase',amps:'19.6A',hz:'60',enclosure:'TEFC',insulation:'F',sf:'1.15',complaint:'Overheating, tripping thermal overload',status:'diagnosis',priority:'Normal'},
-    {customer:'City of Panama City',facility:'Main Pump Station',station:'Lift Station 12',position:'Pump #1',unitType:'Submersible Pump',manufacturer:'Flygt',model:'NP 3085',serial:'TG4421993',hp:'3HP',voltage:'230V',rpm:'1450',phase:'3 Phase',amps:'9.4A',hz:'60',enclosure:'',insulation:'',sf:'',complaint:'Seal failure, water in motor winding',status:'waiting-parts',priority:'Normal'},
-    {customer:'Bay County',facility:'WTP North',station:'Chemical Feed',position:'Pump #1',unitType:'Pump',manufacturer:'Gorman Rupp',model:'T4A60S-B',serial:'1234567',hp:'5HP',voltage:'460V',rpm:'1750',phase:'3 Phase',amps:'7.2A',hz:'60',enclosure:'ODP',insulation:'B',sf:'1.0',complaint:'Leaking shaft seal, vibration',status:'ready',priority:'Normal'},
-    {customer:'Gulf Power',facility:'Plant Crist',station:'Cooling Tower',position:'Motor #2',unitType:'Motor',manufacturer:'US Motors',model:'E15S2AS3E',serial:'USM998877',hp:'15HP',voltage:'460V',rpm:'1775',phase:'3 Phase',amps:'18.6A',hz:'60',enclosure:'TEFC',insulation:'H',sf:'1.15',complaint:'Bearing failure, loud grinding noise',status:'intake',priority:'Emergency'},
+    {customer:'City of Panama City Beach',facility:'Millville WWTP',station:'B&R2',position:'Pump #1',unitType:'Submersible Pump',manufacturer:'Wilo',model:'TR50-2.56-4/16',serial:'650706322',hp:'10HP',voltage:'460V',rpm:'1680',phase:'3 Phase',amps:'14.2A',hz:'60',enclosure:'',insulation:'F',sf:'1.15',reasonForService:'Not pumping, possible impeller damage',status:'in-repair',priority:'Rush'},
+    {customer:'City of Panama City Beach',facility:'St Andrews Plant',station:'Lift Station 7',position:'Pump #2',unitType:'Motor',manufacturer:'Baldor',model:'EM3774T',serial:'F1823B1001',hp:'7.5HP',voltage:'230/460V',rpm:'1750',phase:'3 Phase',amps:'19.6A',hz:'60',enclosure:'TEFC',insulation:'F',sf:'1.15',reasonForService:'Overheating, tripping thermal overload',status:'diagnosis',priority:'Normal'},
+    {customer:'City of Panama City',facility:'Main Pump Station',station:'Lift Station 12',position:'Pump #1',unitType:'Submersible Pump',manufacturer:'Flygt',model:'NP 3085',serial:'TG4421993',hp:'3HP',voltage:'230V',rpm:'1450',phase:'3 Phase',amps:'9.4A',hz:'60',enclosure:'',insulation:'',sf:'',reasonForService:'Seal failure, water in motor winding',status:'waiting-parts',priority:'Normal'},
+    {customer:'Bay County',facility:'WTP North',station:'Chemical Feed',position:'Pump #1',unitType:'Pump',manufacturer:'Gorman Rupp',model:'T4A60S-B',serial:'1234567',hp:'5HP',voltage:'460V',rpm:'1750',phase:'3 Phase',amps:'7.2A',hz:'60',enclosure:'ODP',insulation:'B',sf:'1.0',reasonForService:'Leaking shaft seal, vibration',status:'ready',priority:'Normal'},
+    {customer:'Gulf Power',facility:'Plant Crist',station:'Cooling Tower',position:'Motor #2',unitType:'Motor',manufacturer:'US Motors',model:'E15S2AS3E',serial:'USM998877',hp:'15HP',voltage:'460V',rpm:'1775',phase:'3 Phase',amps:'18.6A',hz:'60',enclosure:'TEFC',insulation:'H',sf:'1.15',reasonForService:'Bearing failure, loud grinding noise',status:'intake',priority:'Emergency'},
     // second visit for S/N 650706322 (old job)
-    {customer:'City of Panama City Beach',facility:'Millville WWTP',station:'B&R2',position:'Pump #1',unitType:'Submersible Pump',manufacturer:'Wilo',model:'TR50-2.56-4/16',serial:'650706322',hp:'10HP',voltage:'460V',rpm:'1680',phase:'3 Phase',amps:'14.2A',hz:'60',enclosure:'',insulation:'F',sf:'1.15',complaint:'Impeller wear, reduced flow',status:'complete',priority:'Normal'},
+    {customer:'City of Panama City Beach',facility:'Millville WWTP',station:'B&R2',position:'Pump #1',unitType:'Submersible Pump',manufacturer:'Wilo',model:'TR50-2.56-4/16',serial:'650706322',hp:'10HP',voltage:'460V',rpm:'1680',phase:'3 Phase',amps:'14.2A',hz:'60',enclosure:'',insulation:'F',sf:'1.15',reasonForService:'Impeller wear, reduced flow',status:'complete',priority:'Normal'},
   ];
   const now=new Date();
   template.forEach((t,i)=>{
@@ -1099,6 +1435,163 @@ function showToast(msg){
 
 
 
+
+// ---- DYNAMIC NAMEPLATE FIELDS ----
+const nameplateConfigs = {
+  'Submersible Pump': [
+    {id:'nj-hp',label:'HP / KW',ph:'e.g. 10HP'},
+    {id:'nj-model',label:'Model #',ph:'e.g. TR50-2.56-4/16'},
+    {id:'nj-frame',label:'Frame',ph:'e.g. 4"'},
+    {id:'nj-voltage',label:'Voltage',ph:'e.g. 230/460V'},
+    {id:'nj-amps',label:'Amps (FLA)',ph:'e.g. 14.2A'},
+    {id:'nj-phase',label:'Phase',type:'phase'},
+    {id:'nj-hz',label:'Hz',ph:'60'},
+    {id:'nj-rpm',label:'RPM',ph:'e.g. 1750'},
+    {id:'nj-ins',label:'Insulation Class',ph:'F, H...'},
+    {id:'nj-sf',label:'Service Factor',ph:'1.15'},
+    {id:'nj-enc',label:'Enclosure / IP',ph:'e.g. IP68'},
+    {id:'nj-leadlen',label:'Lead Length',ph:'e.g. 35ft'},
+  ],
+  'Centrifugal Pump': [
+    {id:'nj-hp',label:'HP / KW',ph:'e.g. 10HP'},
+    {id:'nj-model',label:'Model #',ph:'Model number'},
+    {id:'nj-rpm',label:'Max RPM',ph:'e.g. 3450'},
+    {id:'nj-impeller',label:'Impeller Size',ph:'e.g. 6.25"'},
+    {id:'nj-gpm',label:'GPM',ph:'e.g. 250'},
+    {id:'nj-tdh',label:'TDH (ft)',ph:'e.g. 120'},
+    {id:'nj-suction',label:'Suction Size',ph:'e.g. 3"'},
+    {id:'nj-discharge',label:'Discharge Size',ph:'e.g. 2"'},
+    {id:'nj-frame',label:'Frame',ph:'e.g. 184T'},
+    {id:'nj-voltage',label:'Voltage',ph:'e.g. 460V'},
+    {id:'nj-phase',label:'Phase',type:'phase'},
+    {id:'nj-hz',label:'Hz',ph:'60'},
+  ],
+  'Motor (NEMA)': [
+    {id:'nj-hp',label:'HP',ph:'e.g. 10HP'},
+    {id:'nj-frame',label:'Frame',ph:'e.g. 215T'},
+    {id:'nj-model',label:'Model #',ph:'Model number'},
+    {id:'nj-voltage',label:'Voltage',ph:'e.g. 230/460V'},
+    {id:'nj-amps',label:'Amps (FLA)',ph:'e.g. 14.2A'},
+    {id:'nj-phase',label:'Phase',type:'phase'},
+    {id:'nj-hz',label:'Hz',ph:'60'},
+    {id:'nj-rpm',label:'RPM',ph:'e.g. 1750'},
+    {id:'nj-enc',label:'Enclosure',ph:'TEFC, ODP...'},
+    {id:'nj-ins',label:'Insulation Class',ph:'F, H...'},
+    {id:'nj-sf',label:'Service Factor',ph:'1.15'},
+    {id:'nj-duty',label:'Duty',ph:'Cont, 30min...'},
+  ],
+  'Submersible Motor': [
+    {id:'nj-hp',label:'HP / KW',ph:'e.g. 10HP'},
+    {id:'nj-frame',label:'Frame',ph:'e.g. 6"'},
+    {id:'nj-model',label:'Model #',ph:'Model number'},
+    {id:'nj-voltage',label:'Voltage',ph:'e.g. 230/460V'},
+    {id:'nj-amps',label:'Amps (FLA)',ph:'e.g. 14.2A'},
+    {id:'nj-phase',label:'Phase',type:'phase'},
+    {id:'nj-hz',label:'Hz',ph:'60'},
+    {id:'nj-rpm',label:'RPM',ph:'e.g. 1750'},
+    {id:'nj-ins',label:'Insulation Class',ph:'F, H...'},
+    {id:'nj-sf',label:'Service Factor',ph:'1.15'},
+    {id:'nj-enc',label:'Enclosure / IP',ph:'e.g. IP68'},
+    {id:'nj-leadlen',label:'Lead Length',ph:'e.g. 35ft'},
+  ],
+  'Pump/Motor Combined': [
+    {id:'nj-hp',label:'HP / KW',ph:'e.g. 10HP'},
+    {id:'nj-model',label:'Pump Model #',ph:'Pump model'},
+    {id:'nj-motormodel',label:'Motor Model #',ph:'Motor model'},
+    {id:'nj-frame',label:'Frame',ph:'e.g. 184T'},
+    {id:'nj-voltage',label:'Voltage',ph:'e.g. 230/460V'},
+    {id:'nj-amps',label:'Amps (FLA)',ph:'e.g. 14.2A'},
+    {id:'nj-phase',label:'Phase',type:'phase'},
+    {id:'nj-hz',label:'Hz',ph:'60'},
+    {id:'nj-rpm',label:'RPM',ph:'e.g. 1750'},
+    {id:'nj-enc',label:'Enclosure',ph:'TEFC, ODP...'},
+    {id:'nj-ins',label:'Insulation Class',ph:'F, H...'},
+    {id:'nj-sf',label:'Service Factor',ph:'1.15'},
+  ],
+  'Blower': [
+    {id:'nj-hp',label:'HP / KW',ph:'e.g. 5HP'},
+    {id:'nj-model',label:'Model #',ph:'Model number'},
+    {id:'nj-frame',label:'Frame',ph:'e.g. 184T'},
+    {id:'nj-voltage',label:'Voltage',ph:'e.g. 460V'},
+    {id:'nj-amps',label:'Amps (FLA)',ph:'e.g. 7.2A'},
+    {id:'nj-phase',label:'Phase',type:'phase'},
+    {id:'nj-hz',label:'Hz',ph:'60'},
+    {id:'nj-rpm',label:'RPM',ph:'e.g. 3450'},
+    {id:'nj-cfm',label:'CFM',ph:'e.g. 500'},
+    {id:'nj-pressure',label:'Pressure (PSI/in WG)',ph:'e.g. 5 PSI'},
+    {id:'nj-enc',label:'Enclosure',ph:'TEFC, ODP...'},
+    {id:'nj-ins',label:'Insulation Class',ph:'F, H...'},
+  ],
+  'Gearbox': [
+    {id:'nj-model',label:'Model #',ph:'Model number'},
+    {id:'nj-ratio',label:'Ratio',ph:'e.g. 20:1'},
+    {id:'nj-inputrpm',label:'Input RPM',ph:'e.g. 1750'},
+    {id:'nj-outputrpm',label:'Output RPM',ph:'e.g. 88'},
+    {id:'nj-hp',label:'HP Rating',ph:'e.g. 10HP'},
+    {id:'nj-lubetype',label:'Lubrication Type',ph:'e.g. ISO 220'},
+    {id:'nj-frame',label:'Frame / Size',ph:'e.g. 4'},
+    {id:'nj-enc',label:'Mounting',ph:'e.g. Foot, Flange'},
+  ],
+  'Rotating Assembly': [
+    {id:'nj-model',label:'Model #',ph:'Model number'},
+    {id:'nj-shaftsize',label:'Shaft Size',ph:'e.g. 1.375"'},
+    {id:'nj-bearing1',label:'Drive End Bearing',ph:'e.g. 6309'},
+    {id:'nj-bearing2',label:'Opp Drive End Bearing',ph:'e.g. 6208'},
+    {id:'nj-hp',label:'HP Rating',ph:'e.g. 10HP'},
+    {id:'nj-rpm',label:'Max RPM',ph:'e.g. 3600'},
+    {id:'nj-weight',label:'Weight (lbs)',ph:'e.g. 45'},
+    {id:'nj-frame',label:'Frame Ref',ph:'e.g. 184T'},
+  ],
+};
+
+function updateNameplateFields(){
+  const type = document.getElementById('nj-type') ? document.getElementById('nj-type').value : '';
+  const container = document.getElementById('nameplate-dynamic');
+  if(!container) return;
+
+  const fields = nameplateConfigs[type];
+  if(!fields){
+    // Show default
+    container.innerHTML = document.getElementById('np-default') ? document.getElementById('np-default').outerHTML : getDefaultFields();
+    return;
+  }
+
+  // Build rows of 4
+  let html = '<div class="fr fr4">';
+  fields.forEach((f, i) => {
+    if(i > 0 && i % 4 === 0) html += '</div><div class="fr fr4">';
+    if(f.type === 'phase'){
+      html += '<div class="fg"><label>'+f.label+'</label><select id="'+f.id+'"><option value="">—</option><option>1 Phase</option><option>3 Phase</option></select></div>';
+    } else {
+      html += '<div class="fg"><label>'+f.label+'</label><input id="'+f.id+'" placeholder="'+f.ph+'"></div>';
+    }
+  });
+  // Pad last row to 4
+  const rem = fields.length % 4;
+  if(rem !== 0){ for(let i=0;i<4-rem;i++) html += '<div class="fg"></div>'; }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function getDefaultFields(){
+  return '<div class="fr fr4">' +
+    '<div class="fg"><label>HP / KW</label><input id="nj-hp" placeholder="e.g. 10HP"></div>' +
+    '<div class="fg"><label>Voltage</label><input id="nj-voltage" placeholder="e.g. 460V"></div>' +
+    '<div class="fg"><label>Amps (FLA)</label><input id="nj-amps" placeholder="e.g. 14.2A"></div>' +
+    '<div class="fg"><label>RPM</label><input id="nj-rpm" placeholder="e.g. 1750"></div>' +
+    '</div><div class="fr fr4">' +
+    '<div class="fg"><label>Phase</label><select id="nj-phase"><option value="">—</option><option>1 Phase</option><option>3 Phase</option></select></div>' +
+    '<div class="fg"><label>Hz</label><input id="nj-hz" placeholder="60"></div>' +
+    '<div class="fg"><label>Model #</label><input id="nj-model" placeholder="Model number"></div>' +
+    '<div class="fg"><label>Frame</label><input id="nj-frame" placeholder="e.g. 184T"></div>' +
+    '</div><div class="fr fr4">' +
+    '<div class="fg"><label>Enclosure</label><input id="nj-enc" placeholder="TEFC, ODP..."></div>' +
+    '<div class="fg"><label>Insulation Class</label><input id="nj-ins" placeholder="F, H..."></div>' +
+    '<div class="fg"><label>Service Factor</label><input id="nj-sf" placeholder="1.15"></div>' +
+    '<div class="fg"></div>' +
+    '</div>';
+}
+
 // ---- WILO MODE ----
 function checkWiloMode(val){
   const isWilo = val.toLowerCase().includes('wilo');
@@ -1155,22 +1648,25 @@ function clearWiloFields(){
   });
   const box=document.getElementById('wilo-fields');
   if(box) box.style.display='none';
+  updateNameplateFields();
 }
 
 // ---- SETTINGS & API KEY ----
 function openSettingsModal(){
   const k = getAPIKey();
-  document.getElementById('settings-apikey').value = k ? '(key on file - paste new one to replace)' : '';
+  const inp = document.getElementById('settings-apikey');
+  inp.value = k || '';
+  inp.type = 'password';
   document.getElementById('settings-shopname').value = localStorage.getItem('shoptrack_shopname')||'';
   document.getElementById('settings-nextjob').value = db.nextJob;
-  document.getElementById('key-status').textContent = k ? 'Key on file' : 'No key saved';
+  document.getElementById('key-status').textContent = k ? '✓ Key on file' : 'No key saved';
   openModal('modal-settings');
 }
 
 function saveAPIKey(){
   const key = document.getElementById('settings-apikey').value.trim();
-  if(!key || key.startsWith('(key on file')){
-    document.getElementById('key-status').textContent = 'No change made';
+  if(!key){
+    document.getElementById('key-status').textContent = 'No key entered';
     return;
   }
   if(!key.startsWith('sk-ant-')){
@@ -1178,7 +1674,7 @@ function saveAPIKey(){
     return;
   }
   localStorage.setItem('shoptrack_apikey', key);
-  document.getElementById('key-status').innerHTML = '<span style="color:var(--green);">Key saved!</span>';
+  document.getElementById('key-status').innerHTML = '<span style="color:var(--green);">✓ Key saved!</span>';
 }
 
 function getAPIKey(){
@@ -1335,14 +1831,10 @@ async function scanNameplate(event){
       fillField('nj-wilo-mfy', parsed.mfy);
       fillField('nj-wilo-so', parsed.so);
       fillField('nj-wilo-mc', parsed.mc);
-      // Also fill standard fields from Wilo data
-      fillField('nj-model', parsed.pTyp); // P-Typ as primary model
-      fillField('nj-rpm', parsed.rpm);
-      fillField('nj-hz', parsed.hz);
-      fillField('nj-sf', parsed.sf);
-      // Parse voltage for standard fields
-      if(parsed.voltage) parseWiloVoltage(parsed.voltage);
+      // Set unit type - do NOT fill standard electrical fields for Wilo
+      // All Wilo data lives in the Wilo box only
       document.getElementById('nj-type').value = 'Submersible Pump';
+      updateNameplateFields();
     } else {
       // Generic nameplate
       fillField('nj-mfr', parsed.manufacturer);
